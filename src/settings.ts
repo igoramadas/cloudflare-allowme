@@ -15,16 +15,18 @@ const settings = {
         accountId: process.env.ALLOWME_CF_ACCOUNTID || "",
         // Cloudflare zone name (not needed if zoneId below is specified).
         zone: process.env.ALLOWME_CF_ZONE || "",
-        // Cloudflare zone ID (optional if zone is specified).
-        zoneId: process.env.ALLOWME_CF_ZONEID || "",
-        // Cloudflare list ID (optional, if not set will look for an "allowme" list).
-        listId: process.env.ALLOWME_CF_LISTID || ""
+        // Cloudflare zone ID (fetched automatically).
+        zoneId: null,
+        // Cloudflare firewall rule ID (fetched automatically).
+        firewallId: null,
+        // Cloudflare list ID (optional, if missing it will try creating and fetching the list and firewall ID automatically).
+        listId: process.env.ALLOWME_CF_LISTID || "",
+        // Cloudflare list name (fetched automatically).
+        listName: null
     },
     server: {
         // Server port (defaults to 8080).
         port: process.env.ALLOWME_SERVER_PORT || "",
-        // Server path to allow IPs (defaults is /allow).
-        path: process.env.ALLOWME_SERVER_PATH || "",
         // Server auth secret / password / token.
         secret: process.env.ALLOWME_SERVER_SECRET || "",
         // Server auth user (for auth prompts, defaults to "/allowme").

@@ -13,7 +13,7 @@ let timer: NodeJS.Timer
 
 // List of failed and blocked IPs due to failed authentication.
 const failedIps: {[ip: string]: number} = {}
-const blockedIps: {[ip: string]: Date} = {}
+const bannedIps: {[ip: string]: Date} = {}
 
 /**
  * Prepare the Express app and server.
@@ -73,13 +73,32 @@ export const prepare = (): void => {
         }
     })
 
-    // Allow route.
-    app.get(settings.server.path, authValidator, async (req, res) => {
-        await cloudflare.ipAllow(req.ip)
-        res.status(200).send(req.ip)
+    // Allow (add IP) route.
+    app.get("/allow", authValidator, async (req, res) => {
+        const ip = req.ip
 
-        delete failedIps[req.ip]
-        delete blockedIps[req.ip]
+        try {
+            const ok = await cloudflare.ipAllow(ip)
+            res.status(200).send(`Add ${ip}: ${ok}`)
+
+            delete failedIps[ip]
+            delete bannedIps[ip]
+        } catch (ex) {
+            res.status(500).send(`Failed to add: ${ip}`)
+        }
+    })
+
+    // Block (remove IP) route.
+    app.get("/block", authValidator, async (req, res) => {
+        const ip = req.ip
+
+        try {
+            const ip = "91.91.91.91" || req.ip
+            const ok = await cloudflare.ipBlock(ip)
+            res.status(200).send(`Remove ${ip}: ${ok}`)
+        } catch (ex) {
+            res.status(500).send(`Failed to remove: ${ip}`)
+        }
     })
 }
 
@@ -118,12 +137,12 @@ export const start = (): void => {
         // Cleanup blocked IPs every 5 minutes.
         const authCleanup = () => {
             const minDate = new Date().valueOf() - parseInt(settings.ip.blockInterval) * 1000 * 60
-            const entries = Object.entries(blockedIps)
+            const entries = Object.entries(bannedIps)
 
             for (let [ip, blockDate] of entries) {
                 if (blockDate.valueOf() < minDate) {
                     logger.warn("Server.authCleanup", ip, "Unblocked")
-                    delete blockedIps[ip]
+                    delete bannedIps[ip]
                 }
             }
         }
@@ -172,8 +191,8 @@ const authFailed = (req: express.Request) => {
     if (parseInt(settings.ip.blockInterval) > 0) {
         if (failedIps[req.ip] >= 5) {
             failedIps[req.ip]
-            blockedIps[req.ip] = new Date()
-            logger.warn("Server.authFailed", req.ip, "IP blocked")
+            bannedIps[req.ip] = new Date()
+            logger.warn("Server.authFailed", req.ip, "IP banned")
         } else {
             logger.warn("Server.authFailed", req.ip, failedIps[req.ip])
         }

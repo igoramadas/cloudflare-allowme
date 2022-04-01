@@ -4,6 +4,7 @@
 .history
 .prettierignore
 bin/
+docs/
 node_modules/
 src/
 Makefile
