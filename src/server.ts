@@ -1,6 +1,6 @@
 // Cloudflare AllowMe: Server
 
-import {getBoolean} from "./utils"
+import {getBoolean, getDevice} from "./utils"
 import logger = require("anyhow")
 import settings = require("./settings")
 import * as cloudflare from "./cloudflare"
@@ -11,7 +11,9 @@ let app: express.Application
 let server: http.Server
 let timer: NodeJS.Timer
 
-// List of failed and blocked IPs due to failed authentication.
+// List of failed and banned IPs due to failed authentication.
+// Please note that this is related to the AllowMe service
+// itself, and NOT the Cloudflare IP list.
 const failedIps: {[ip: string]: number} = {}
 const bannedIps: {[ip: string]: Date} = {}
 
@@ -76,9 +78,10 @@ export const prepare = (): void => {
     // Allow (add IP) route.
     app.get("/allow", authValidator, async (req, res) => {
         const ip = req.ip
+        const device = req.headers["x-device-name"] || getDevice(req.headers["user-agent"])
 
         try {
-            const ok = await cloudflare.ipAllow(ip)
+            const ok = await cloudflare.ipAllow(ip, device as string)
             res.status(200).send(`Add ${ip}: ${ok}`)
 
             delete failedIps[ip]
@@ -91,10 +94,11 @@ export const prepare = (): void => {
     // Block (remove IP) route.
     app.get("/block", authValidator, async (req, res) => {
         const ip = req.ip
+        const device = req.headers["x-device-name"] || getDevice(req.headers["user-agent"])
 
         try {
-            const ip = "91.91.91.91" || req.ip
-            const ok = await cloudflare.ipBlock(ip)
+            const ip = req.ip
+            const ok = await cloudflare.ipBlock(ip, device as string)
             res.status(200).send(`Remove ${ip}: ${ok}`)
         } catch (ex) {
             res.status(500).send(`Failed to remove: ${ip}`)
@@ -182,21 +186,19 @@ export const stop = (): void => {
  * @param req Request object.
  */
 const authFailed = (req: express.Request) => {
+    const device = req.headers["x-device-name"] || getDevice(req.headers["user-agent"])
+
     if (!failedIps[req.ip]) {
         failedIps[req.ip] = 1
     } else {
         failedIps[req.ip]++
     }
 
-    if (parseInt(settings.ip.blockInterval) > 0) {
-        if (failedIps[req.ip] >= 5) {
-            failedIps[req.ip]
-            bannedIps[req.ip] = new Date()
-            logger.warn("Server.authFailed", req.ip, "IP banned")
-        } else {
-            logger.warn("Server.authFailed", req.ip, failedIps[req.ip])
-        }
+    if (parseInt(settings.ip.blockInterval) > 0 && failedIps[req.ip] >= 5) {
+        failedIps[req.ip]
+        bannedIps[req.ip] = new Date()
+        logger.warn("Server.authFailed", req.ip, device, "IP banned")
     } else {
-        logger.warn("Server.authFailed", req.ip, failedIps[req.ip])
+        logger.warn("Server.authFailed", req.ip, device, `Count ${failedIps[req.ip]}`)
     }
 }
