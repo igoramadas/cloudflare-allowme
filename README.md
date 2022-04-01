@@ -2,7 +2,22 @@
 
 A pratical, highly configurable Node.js service / tool to automatically manage a list of allowed IPs in your Cloudflare's zone firewall. Very useful if you self-host and want to protect services like Home Assistant, Plex, WordPress etc.
 
-## How does it work?
+- [How does it work](#how-does-it-work)
+- [Setup guide](#setup-guide)
+    - [Cloudflare API token](#cloudflare-api-token)
+    - [Cloudflare IP list](#cloudflare-ip-list)
+    - [Cloudflare firewall rule](#cloudflare-firewall-rule)
+    - [Running with Docker](#running-with-docker)
+    - [Running directly with Node.js](#running-directly-with-nodejs)
+- [Service configuration](#service-configuration)
+- [Endpoints](#endpoints)
+    - [Securing with HTTPS](#securing-with-https)
+- [Client configuration](#client-configuration)
+    - [Tasker sample action](#tasker-sample-action)
+    - [iOS Shortcuts](#ios-shortcuts)
+- [FAQ](#faq)
+
+## How does it work
 
 This service must be deployed to a platform accessible from anywhere (AWS, GCP, Azure, your own VPS, etc). It listens on port 8080 by default, and has 2 main endpoints:
 
@@ -62,7 +77,7 @@ If you already have an IP list that you want to reuse, you can simply grab its I
 
 ### Cloudflare firewall rule
 
-Optional. Pretty much like the IP list above, the service can automatically create the firewall rule for you, but only if you have not specified a `$ALLOWME_CF_LISTID` variable manually. If you have specified it, then follow the steps:
+Optional. Pretty much like the IP list above, the service can automatically create the (WAF) firewall rule for you, but only if you have not specified a `$ALLOWME_CF_LISTID` variable manually. If you have specified it, then follow the steps:
 
 1. Go to the zone dashboard on Cloudflare.
 2. On the left sidebar, open "Security" > "WAF" (previously called Firewall Rules). [⧉](./docs/images/firewall.png)
@@ -71,6 +86,42 @@ Optional. Pretty much like the IP list above, the service can automatically crea
     - Filter: "IP Source Address", "is in list", "allowme" (or the name of the list you have created manually)
     - Action: "Allow"
 5. Click "Deploy" to save.
+
+### Running with Docker
+
+The easiest way to get this tool up and running is using the official Docker image:
+
+```
+$ docker pull igoramadas/cloudflare-allowme
+
+$ docker run -it --name cloudflare-allowme \
+             -p 80:8080 \
+             -e ALLOWME_CF_TOKEN=MY_API_TOKEN \
+             -e ALLOWME_CF_ZONE=MYDOMAIN.COM \
+             -e ALLOWME_SERVER_SECRET=MY_SUPER_SECRET_KEY
+             igoramadas/cloudflare-allowme
+```
+
+### Running directly with Node.js
+
+First, make sure you have all dependencies installed:
+
+```
+$ npm install --production
+```
+
+Then (on the root of the application) to start the service it's as simple as:
+
+```
+$ npm start
+```
+
+If you choose to have it running directly on your environment, it's highly recommended to use a process manager, for example [pm2](https://www.npmjs.com/package/pm2):
+
+```
+$ npm install pm2 -g
+$ pm2 start lib/index.js
+```
 
 ## Service configuration
 
@@ -114,43 +165,7 @@ ALLOWME_SERVER_PROMPT=false
 | GET | **/allow** | Add the client IP to the allow list
 | GET | **/block** | Remove the client IP from the allow list
 
-## Running it with Docker
-
-The easiest way to get this tool up and running is using the official Docker image:
-
-```
-$ docker pull igoramadas/cloudflare-allowme
-
-$ docker run -it --name cloudflare-allowme \
-             -p 80:8080 \
-             -e ALLOWME_CF_TOKEN=MY_API_TOKEN \
-             -e ALLOWME_CF_ZONE=MYDOMAIN.COM \
-             -e ALLOWME_SERVER_SECRET=MY_SUPER_SECRET_KEY
-             igoramadas/cloudflare-allowme
-```
-
-## Running it directly with Node.js
-
-First, make sure you have all dependencies installed:
-
-```
-$ npm install --production
-```
-
-Then (on the root of the application) to start the service it's as simple as:
-
-```
-$ npm start
-```
-
-If you choose to have it running directly on your environment, it's highly recommended to use a process manager, for example [pm2](https://www.npmjs.com/package/pm2):
-
-```
-$ npm install pm2 -g
-$ pm2 start lib/index.js
-```
-
-## Securing the service with HTTPS
+### Securing with HTTPS
 
 This service runs on HTTP only. You could use Cloudflare itself to have it running with HTTPS, or a self-hosted reverse proxy running next to the service instance: [nginx](https://docs.nginx.com/nginx/admin-guide/web-server/reverse-proxy/), [caddy](https://caddyserver.com/), [traefik](https://traefik.io/).
 
@@ -162,7 +177,7 @@ If you decide to put this service behind Cloudflare, you can add a few extra sec
 
 If you have an Android device, you can use automation applications like [Tasker](https://tasker.joaoapps.com/) or [Automate](https://llamalab.com/automate/) to automatically call the service endpoint when your connection state changes (ie. connect or disconnect from Wifi).
 
-#### Tasker sample action
+### Tasker sample action
 
 ```xml
 <TaskerData sr="" dvi="1" tv="6.0.2-beta">
@@ -194,7 +209,7 @@ X-Device-Name:DEVICE_NAME_HERE</Str>
 
 Replace the `YOUR.DOMAIN.COM` with your target host, `YOUR_SECRET_HERE` with your secret / token defined with `$ALLOWME_CF_TOKEN`, and `DEVICE_NAME_HERE` with the device identification.
 
-#### iOS Shortcuts
+### iOS Shortcuts
 
 I don't have iOS devices so I can test it for myself, but I think [Shortcuts](https://support.apple.com/en-gb/guide/shortcuts/welcome/ios) is your best bet. Simply create a shortcut that triggers a [request](https://support.apple.com/en-gb/guide/shortcuts/apd58d46713f/ios) to the /allow endpoint.
 
