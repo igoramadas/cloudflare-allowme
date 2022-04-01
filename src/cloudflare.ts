@@ -169,7 +169,7 @@ export const ipAllow = async (ip: string, device: string): Promise<boolean> => {
     try {
         const validIP = parseIP(ip)
         if (!validIP) {
-            logger.warn("Cloudflare.ipBlock", ip, "Invalid IP")
+            logger.warn("Cloudflare.ipBlock", ip, device, "Invalid IP")
             return false
         }
 
@@ -179,7 +179,7 @@ export const ipAllow = async (ip: string, device: string): Promise<boolean> => {
         // Stop here if IP is already present on the allowme list.
         const items = await getListItems()
         if (items.find((i) => i.ip == validIP)) {
-            logger.warn("Cloudflare.ipAllow", validIP, "Already on the list")
+            logger.warn("Cloudflare.ipAllow", validIP, device, "IP already on the list")
             return false
         }
 
@@ -205,7 +205,7 @@ export const ipBlock = async (ip: string, device: string): Promise<boolean> => {
     try {
         const validIP = parseIP(ip)
         if (!validIP) {
-            logger.warn("Cloudflare.ipBlock", ip, "Invalid IP")
+            logger.warn("Cloudflare.ipBlock", ip, device, "Invalid IP")
             return false
         }
 
@@ -214,7 +214,7 @@ export const ipBlock = async (ip: string, device: string): Promise<boolean> => {
 
         // Stop here if the IP is not present.
         if (!ipItem) {
-            logger.warn("Cloudflare.ipBlock", validIP, "Not on the list")
+            logger.warn("Cloudflare.ipBlock", validIP, device, "IP not on the list")
             return false
         }
 
