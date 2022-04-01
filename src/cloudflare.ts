@@ -1,5 +1,6 @@
 // Cloudflare AllowMe: API client
 
+import {parseIP} from "./utils"
 import logger = require("anyhow")
 import settings = require("./settings")
 import axios, {AxiosRequestConfig} from "axios"
@@ -7,7 +8,7 @@ import axios, {AxiosRequestConfig} from "axios"
 // IP items comments are prefixed with an AllowMe.
 const commentPrefix: string = "AllowMe: "
 
-// IPs will be removed from the allow list only if they haven't been
+// IPs will be removed from the allowme list only if they haven't been
 // pinged for a certain amount of time.
 const ipTimestamp: {[ip: string]: number} = {}
 
@@ -159,31 +160,34 @@ export const createFirewall = async (): Promise<string> => {
 }
 
 /**
- * Add the specified IP to the allow list.
+ * Add the specified IP to the allowme list.
  * Will throw an exception if it fails.
  * @param ip Client IP.
  * @param device Device name.
  */
 export const ipAllow = async (ip: string, device: string): Promise<boolean> => {
     try {
-        if (ip == "::1" || ip == "127.0.0.1") {
-            logger.warn("Cloudflare.ipAllow", ip, "Local IP, won't be added")
+        const validIP = parseIP(ip)
+        if (!validIP) {
+            logger.warn("Cloudflare.ipBlock", ip, "Invalid IP")
             return false
         }
 
-        ipTimestamp[ip] = new Date().valueOf()
+        // Add IP to the timestamp cache.
+        ipTimestamp[validIP] = new Date().valueOf()
 
+        // Stop here if IP is already present on the allowme list.
         const items = await getListItems()
-
-        if (items.find((i) => i.ip == ip)) {
-            logger.warn("Cloudflare.ipAllow", ip, "Already on the list")
+        if (items.find((i) => i.ip == validIP)) {
+            logger.warn("Cloudflare.ipAllow", validIP, "Already on the list")
             return false
         }
 
-        const data = [{ip: ip, comment: `${commentPrefix} ${device}`}]
+        // Finally push the IP to the allowme list.
+        const data = [{ip: validIP, comment: `${commentPrefix} ${device}`}]
         await makeRequest(`accounts/${settings.cloudflare.accountId}/rules/lists/${settings.cloudflare.listId}/items`, "POST", data)
 
-        logger.info("Cloudflare.ipAllow", ip, device)
+        logger.info("Cloudflare.ipAllow", validIP, device)
         return true
     } catch (ex) {
         logger.error("Cloudflare.ipAllow", ip, device, ex)
@@ -192,30 +196,33 @@ export const ipAllow = async (ip: string, device: string): Promise<boolean> => {
 }
 
 /**
- * Remove the specified IP from the allow list.
+ * Remove the specified IP from the allowme list.
  * Will throw an exception if it fails.
  * @param ip Client IP.
  * @param device Device name.
  */
 export const ipBlock = async (ip: string, device: string): Promise<boolean> => {
     try {
-        if (ip == "::1" || ip == "127.0.0.1") {
-            logger.warn("Cloudflare.ipBlock", ip, "Local IP, won't be removed")
+        const validIP = parseIP(ip)
+        if (!validIP) {
+            logger.warn("Cloudflare.ipBlock", ip, "Invalid IP")
             return false
         }
 
         const items = await getListItems()
-        const ipItem = items.find((i) => i.ip == ip)
+        const ipItem = items.find((i) => i.ip == validIP)
 
+        // Stop here if the IP is not present.
         if (!ipItem) {
-            logger.warn("Cloudflare.ipBlock", ip, "Not on the list")
+            logger.warn("Cloudflare.ipBlock", validIP, "Not on the list")
             return false
         }
 
-        const data = {items: [{id: ipItem.id}]}
+        // Finally remove the IP from the allowme list.
+        const data = {items: [{id: validIP}]}
         await makeRequest(`accounts/${settings.cloudflare.accountId}/rules/lists/${settings.cloudflare.listId}/items`, "DELETE", data)
 
-        logger.info("Cloudflare.ipBlock", ip, device, `Removed ${ipItem.id}`)
+        logger.info("Cloudflare.ipBlock", validIP, device, `Removed ${ipItem.id}`)
         return true
     } catch (ex) {
         logger.error("Cloudflare.ipBlock", ip, device, ex)
@@ -238,9 +245,10 @@ export const cleanup = async (): Promise<void> => {
         for (let item of items) {
             if (item.comment && item.comment.substring(0, commentPrefix.length) == commentPrefix) {
                 const created = new Date(item.created_on).valueOf()
+                const timestamp = ipTimestamp[item.ip] || 0
 
                 // Too old? Mark the IP for removal.
-                if (now - age > created) {
+                if (now - age > created && now - age > timestamp) {
                     const device = item.comment.substring(commentPrefix.length + 1)
                     logger.info("Cloudflare.cleanup", item.ip, device, "Will be removed")
                     data.items.push({id: item.id})

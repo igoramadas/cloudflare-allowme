@@ -1,5 +1,6 @@
 // Cloudflare AllowMe: Utils
 
+import logger = require("anyhow")
 import uaParser = require("ua-parser-js")
 
 /**
@@ -33,4 +34,29 @@ export const getDevice = (useragent: string): string => {
     if (result.length == 0) result.push(useragent.split[" "][0])
 
     return result.join(" ")
+}
+
+/**
+ * Parse and return only IP / ranges that are valid in Cloudflare.
+ * IPv6 will be converted to a /64 CIDR range.
+ */
+export const parseIP = (ip: string): string => {
+    try {
+        if (!ip || ip == "::1" || ip == "127.0.0.1") {
+            return null
+        }
+
+        // Convert IPv6 to /64.
+        if (ip.includes(":")) {
+            const ipv6 = ip.split(":")
+            if (ipv6.length > 4) {
+                return `${ipv6.slice(0, 4).join(":")}::/64`
+            }
+        }
+
+        return ip
+    } catch (ex) {
+        logger.error("Utils.parseIP", ip, ex)
+        return null
+    }
 }
