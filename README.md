@@ -1,14 +1,15 @@
 # Cloudflare AllowMe
 
-A simple Node.js service / tool to automatically manage a list of IPs in your Cloudflare's zone firewall.
+A pratical, highly configurable Node.js service / tool to automatically manage a list of allowed IPs in your Cloudflare's zone firewall. Very useful if you self-host and want to protect services like Home Assistant, Plex, WordPress etc.
 
-If you have a specific server that needs to be accessible from the internet, and you:
+## How does it work?
 
-- Use Cloudflare as a DNS proxy / firewall
-- Allow only IPs from Cloudflare to access your server from the outside
-- Want a more granular, temporal access control via IP restrictions
+This service must be deployed to a platform accessible from anywhere (AWS, GCP, Azure, your own VPS, etc). It listens on port 8080 by default, and has 2 main endpoints:
 
-Then this might be a good fit for you!
+- `/allow` to allow the client IP
+- `/block` to block the client IP
+
+You should call these endpoints (mostly the /allow) from your devices to add or remove your current IP address to the list of IPs allowed on your Cloudflare's zone firewall. IPs are then automatically removed from the list after some time (1 day by default).
 
 ### Ultra quick start
 
@@ -21,15 +22,11 @@ Then this might be a good fit for you!
 4. Configure your mobile devices to ping the service's `/allow` endpoint regularly or via shortcuts.
 5. Enjoy!
 
-## Pre requisites
+## Setup guide
 
 You should have a zone (domain) already registered with Cloudflare. If you don't, please follow [these steps](https://support.cloudflare.com/hc/en-us/articles/201720164-Creating-a-Cloudflare-account-and-adding-a-website).
 
-This service itself requires minimal resources to run. You can spin it up on virtually any VM or cloud instance.
-
-## Cloudflare setup
-
-### API token
+### Cloudflare API token
 
 Mandatory. First step is to create an API token for the service. If you already have a token with the necessary permissions and want to reuse it, you can skip to step 6.
 
@@ -46,7 +43,7 @@ Mandatory. First step is to create an API token for the service. If you already 
 5. Click "Continue to summary", then "Save token".
 6. Copy the token value, it will be used as the `$ALLOWME_CF_TOKEN` variable.
 
-### IP list
+### Cloudflare IP list
 
 Optional. Next you'll have to define an IP rule list to manage the allowed IPs. By default, if you don't have any IP rule lists created on your Cloudflare account, the service will automatically create an "allowme" list for you, so you can skip these steps altogether. Otherwise if you want to do it manually:
 
@@ -63,7 +60,7 @@ If you already have an IP list that you want to reuse, you can simply grab its I
 4. Get the list ID from the URL, to be used as the `$ALLOWME_CF_LISTID` variable: [⧉](./docs/images/ip-list-edit.png)
     - Example: https://dash.cloudflare.com/account123/configurations/lists/LIST_ID
 
-### Firewall rule
+### Cloudflare firewall rule
 
 Optional. Pretty much like the IP list above, the service can automatically create the firewall rule for you, but only if you have not specified a `$ALLOWME_CF_LISTID` variable manually. If you have specified it, then follow the steps:
 
@@ -104,7 +101,7 @@ The service is fully configured via environment variables, either directly or vi
 ```
 ALLOWME_CF_TOKEN=abc123abc123999000
 ALLOWME_CF_ZONE=devv.com
-ALLOWME_SERVER_PORT=80
+ALLOWME_SERVER_PORT=1234
 ALLOWME_SERVER_SECRET=mysecret
 ALLOWME_SERVER_PROMPT=false
 ```
@@ -153,18 +150,72 @@ $ npm install pm2 -g
 $ pm2 start lib/index.js
 ```
 
-## A few more tidbits
+## Securing the service with HTTPS
 
-### Securing the endpoint with HTTPS
+This service runs on HTTP only. You could use Cloudflare itself to have it running with HTTPS, or a self-hosted reverse proxy running next to the service instance: [nginx](https://docs.nginx.com/nginx/admin-guide/web-server/reverse-proxy/), [caddy](https://caddyserver.com/), [traefik](https://traefik.io/).
 
-This service runs on HTTP only. You could use Cloudflare itself to have it running with HTTPS, or a self-hosted reverse proxy running next to the service instance: [nginx](https://docs.nginx.com/nginx/admin-guide/web-server/reverse-proxy/), [caddy](https://caddyserver.com/), [traefik](https://traefik.io/). If you decide to go with Caddy, have a look on [this other project](https://github.com/igoramadas/docker-caddy-cloudflare) of mine.
+If you decide to go with Caddy, have a look on [this other project](https://github.com/igoramadas/docker-caddy-cloudflare) of mine.
 
-If you decide to put this service behind Cloudflare, you can add a few extra security constraints using its firewall. For instance, restricting access to the service only to specific User Agents, if you know what those user agents are beforehand.
+If you decide to put this service behind Cloudflare, you can add a few extra security constraints using its firewall. For instance, restricting access to the service only to specific User Agents.
 
-### Automating requests on your mobile
+## Client configuration
 
 If you have an Android device, you can use automation applications like [Tasker](https://tasker.joaoapps.com/) or [Automate](https://llamalab.com/automate/) to automatically call the service endpoint when your connection state changes (ie. connect or disconnect from Wifi).
 
-I don't have iOS devices so I can test it for myself, but I think [Shortcuts](https://support.apple.com/en-gb/guide/shortcuts/welcome/ios) is your best bet.
+#### Tasker sample action
 
-If you decide to go full-automated then the `$ALLOWME_SERVER_PROMPT` can be set to "false".
+```xml
+<TaskerData sr="" dvi="1" tv="6.0.2-beta">
+	<Task sr="taskallowme">
+		<cdate>1648836036651</cdate>
+		<edate>1648843761586</edate>
+		<id>5</id>
+		<nme>AllowMe</nme>
+		<pri>100</pri>
+		<Action sr="act0" ve="7">
+			<code>339</code>
+			<Int sr="arg1" val="0"/>
+			<Int sr="arg10" val="0"/>
+			<Int sr="arg11" val="0"/>
+			<Int sr="arg12" val="1"/>
+			<Str sr="arg2" ve="3">https://YOUR.DOMAIN.COM/allow</Str>
+			<Str sr="arg3" ve="3">Authorization:YOUR_SECRET_HERE
+X-Device-Name:DEVICE_NAME_HERE</Str>
+			<Str sr="arg4" ve="3"/>
+			<Str sr="arg5" ve="3"/>
+			<Str sr="arg6" ve="3"/>
+			<Str sr="arg7" ve="3"/>
+			<Int sr="arg8" val="20"/>
+			<Int sr="arg9" val="0"/>
+		</Action>
+	</Task>
+</TaskerData>
+```
+
+Replace the `YOUR.DOMAIN.COM` with your target host, `YOUR_SECRET_HERE` with your secret / token defined with `$ALLOWME_CF_TOKEN`, and `DEVICE_NAME_HERE` with the device identification.
+
+#### iOS Shortcuts
+
+I don't have iOS devices so I can test it for myself, but I think [Shortcuts](https://support.apple.com/en-gb/guide/shortcuts/welcome/ios) is your best bet. Simply create a shortcut that triggers a [request](https://support.apple.com/en-gb/guide/shortcuts/apd58d46713f/ios) to the /allow endpoint.
+
+## FAQ
+
+### How does it cleanup the list of allowed IPs?
+
+The service will get the list of allowed IPs from Cloudflare every hour, and remove all addresses that were added more than 24 hours ago by default. You can change this value by setting the `$ALLOWME_IP_MAXAGE` variable. You can also set it to "false" to disable the auto cleanup.
+
+Please note that only IPs added by the service will be removed. They have a "AllowMe" prefix on their comment. If you manually add an IP to the list, it will be left untouched.
+
+### Why HTTP and not HTTPS?
+
+Simplicity. The SSL / TLS part is better handled by a reverse proxy.
+
+### Does it work with local IPs?
+
+Technically, yes, but I'm not sure if there's such a use case.
+
+### How does it identify the client's IP and device details?
+
+The IP address comes from the `X-Forwarded-For` header, unless you have set `$ALLOWME_SERVER_TRUSTPROXY` to "false". If there's no header, it simply gets the client IP from the TCP connection itself.
+
+The device details are taken from the `User-Agent` header by default. If you want to set a custom device name, please pass it via the `X-Device-Name` header.
