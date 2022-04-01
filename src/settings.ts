@@ -11,10 +11,10 @@ const settings = {
     cloudflare: {
         // Clodflare API token.
         token: process.env.ALLOWME_CF_TOKEN || "",
-        // Cloudflare account ID (optional).
-        accountId: process.env.ALLOWME_CF_ACCOUNTID || "",
         // Cloudflare zone name (not needed if zoneId below is specified).
         zone: process.env.ALLOWME_CF_ZONE || "",
+        // Cloudflare account ID (optional).
+        accountId: process.env.ALLOWME_CF_ACCOUNTID || "",
         // Cloudflare zone ID (fetched automatically).
         zoneId: null,
         // Cloudflare firewall rule ID (fetched automatically).

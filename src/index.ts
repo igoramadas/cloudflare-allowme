@@ -25,9 +25,9 @@ const run = async () => {
     try {
         logger.info("Index.run", "Starting the service")
 
-        if (!settings.server.secret) throw new Error("Missing server token ($ALLOWME_SERVER_SECRET)")
         if (!settings.cloudflare.token) throw new Error("Missing Cloudflare token ($ALLOWME_CF_TOKEN)")
-        if (!settings.cloudflare.zone && !settings.cloudflare.zoneId) throw new Error("Missing Cloudflare zone ($ALLOWME_CF_ZONE)")
+        if (!settings.cloudflare.zone) throw new Error("Missing Cloudflare zone ($ALLOWME_CF_ZONE)")
+        if (!settings.server.secret) throw new Error("Missing server token ($ALLOWME_SERVER_SECRET)")
 
         // Set defaults.
         if (settings.server.port == "") settings.server.port = "8080"

@@ -1,6 +1,8 @@
 # Cloudflare AllowMe
 
-A simple yet powerful Node.js service / tool to automatically manage a list of IPs allowed in Cloudflare zone firewall. If you have a specific server that needs to be accessible from the internet, and you:
+A simple Node.js service / tool to automatically manage a list of IPs in your Cloudflare's zone firewall.
+
+If you have a specific server that needs to be accessible from the internet, and you:
 
 - Use Cloudflare as a DNS proxy / firewall
 - Allow only IPs from Cloudflare to access your server from the outside
@@ -8,23 +10,24 @@ A simple yet powerful Node.js service / tool to automatically manage a list of I
 
 Then this might be a good fit for you!
 
-## Ultra quick start
+### Ultra quick start
 
 1. Get your Cloudflare API token.
-2. Set the nvironment variables:
-    - `$ALLOWME_CF_ZONE` = your domain / zone
-    - `$ALLOWME_CF_TOKEN` = your Cloudflare API token with the necessary permissions
-    - `$ALLOWME_SERVER_SECRET` = your custom secret / password used to authenticate to the service
+2. Prepare the environment variables:
+    - `$ALLOWME_CF_ZONE` = your domain / zone.
+    - `$ALLOWME_CF_TOKEN` = your Cloudflare API token with the necessary permissions.
+    - `$ALLOWME_SERVER_SECRET` = your custom secret / password used to authenticate to the service.
 3. Run the `igoramadas/cloudflare-allowme` Docker image with the variables above.
-4. Configure your mobile devices to ping the service every few hours to allow their current IP address on the Cloudflare firewall.
+4. Configure your mobile devices to ping the service's `/allow` endpoint regularly or via shortcuts.
+5. Enjoy!
 
 ## Pre requisites
 
-You should already have a zone (domain) registered with Cloudflare. If you don't, please follow [these steps](https://support.cloudflare.com/hc/en-us/articles/201720164-Creating-a-Cloudflare-account-and-adding-a-website).
+You should have a zone (domain) already registered with Cloudflare. If you don't, please follow [these steps](https://support.cloudflare.com/hc/en-us/articles/201720164-Creating-a-Cloudflare-account-and-adding-a-website).
 
 This service itself requires minimal resources to run. You can spin it up on virtually any VM or cloud instance.
 
-## Cloudflare preparation
+## Cloudflare setup
 
 ### API token
 
@@ -62,7 +65,7 @@ If you already have an IP list that you want to reuse, you can simply grab its I
 
 ### Firewall rule
 
-Optional. Pretty much like the IP list, the service can automatically create the firewall rule for you, but only if you have not specified a `$ALLOWME_CF_LISTID` variable manually. If you have specified it, then follow the steps:
+Optional. Pretty much like the IP list above, the service can automatically create the firewall rule for you, but only if you have not specified a `$ALLOWME_CF_LISTID` variable manually. If you have specified it, then follow the steps:
 
 1. Go to the zone dashboard on Cloudflare.
 2. On the left sidebar, open "Security" > "WAF" (previously called Firewall Rules). [⧉](./docs/images/firewall.png)
@@ -79,8 +82,8 @@ The service is fully configured via environment variables, either directly or vi
 | VARIABLE | TYPE | DETAILS |
 | --- | --- | --- |
 | **ALLOWME_CF_TOKEN** * |  string | Your Cloudflare API token. Mandatory. |
-| **ALLOWME_CF_ACCOUNTID** | string | If you have multiple accounts, you can set the ID of the correct account here. If unset, the service will use the main account. The account ID can be taken from your dashboard URL, it's the token string right after dash.cloudflare.com/. |
 | **ALLOWME_CF_ZONE** * | string | The zone which should be updated, for example "mydomain.com". |
+| **ALLOWME_CF_ACCOUNTID** | string | If you have multiple accounts, you can set the ID of the correct account here. If unset, the service will use the main account. The account ID can be taken from your dashboard URL, it's the token string right after dash.cloudflare.com/. |
 | **ALLOWME_CF_LISTID** | string | Optional. The IP list ID, in case you don't want to have a dedicated "allowme" list. You can get the list ID from the URL of its edit page. If set, you'll have to configure the firewall rule manually (see the "Firewall rule" section above). |
 | | | |
 | **ALLOWME_SERVER_PORT** | number | Web server HTTP port. Defaults to "8080". |
@@ -105,6 +108,14 @@ ALLOWME_SERVER_PORT=80
 ALLOWME_SERVER_SECRET=mysecret
 ALLOWME_SERVER_PROMPT=false
 ```
+
+## Endpoints
+
+| Method | Path | Details |
+| - | - | - |
+| GET | **/** | Redirect the user or display a text, depending on the `$ALLOWME_SERVER_HOME` variable |
+| GET | **/allow** | Add the client IP to the allow list
+| GET | **/block** | Remove the client IP from the allow list
 
 ## Running it with Docker
 
@@ -141,14 +152,6 @@ If you choose to have it running directly on your environment, it's highly recom
 $ npm install pm2 -g
 $ pm2 start lib/index.js
 ```
-
-## Endpoints
-
-| Method | Path | Details |
-| - | - | - |
-| GET | **/** | Redirect the user or display a text, depending on the `$ALLOWME_SERVER_HOME` variable |
-| GET | **/allow** | Add the client IP to the allow list
-| GET | **/block** | Remove the client IP from the allow list
 
 ## A few more tidbits
 
