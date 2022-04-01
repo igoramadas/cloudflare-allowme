@@ -4,7 +4,7 @@ TSC:= ./node_modules/.bin/tsc
 
 build:
 	$(TSC)
-	docker build -t igoramadas/cloudflare-allowme .
+	docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v7 -t igoramadas/cloudflare-allowme .
 
 clean:
 	rm -rf ./lib
@@ -12,8 +12,8 @@ clean:
 	rm -f package-lock.json
 
 publish:
-	npm publish
 	docker push igoramadas/cloudflare-allowme
+	npm publish
 
 run:
 	$(TSC)
