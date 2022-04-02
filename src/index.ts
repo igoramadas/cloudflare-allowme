@@ -33,7 +33,7 @@ const run = async () => {
         if (settings.server.port == "") settings.server.port = "8080"
         if (settings.server.user == "") settings.server.user = "allowme"
         if (settings.server.prompt == "") settings.server.prompt = "true"
-        if (settings.server.home == "") settings.server.home = "https://github.com/igoramadas/cloudflare-allowme"
+        if (settings.server.home == "") settings.server.home = "https://devv.com"
         if (settings.server.trustProxy == "") settings.server.trustProxy = "true"
         if (settings.ip.maxAge == "") settings.ip.maxAge = "1440"
         if (settings.ip.blockInterval == "") settings.ip.blockInterval = "60"

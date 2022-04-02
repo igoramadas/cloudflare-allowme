@@ -179,7 +179,7 @@ export const ipAllow = async (ip: string, device: string): Promise<boolean> => {
         // Stop here if IP is already present on the allowme list.
         const items = await getListItems()
         if (items.find((i) => i.ip == validIP)) {
-            logger.warn("Cloudflare.ipAllow", validIP, device, "IP already on the list")
+            logger.info("Cloudflare.ipAllow", validIP, device, "IP already on the list")
             return false
         }
 
