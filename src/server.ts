@@ -30,13 +30,34 @@ export const prepare = (): void => {
     }
 
     // Auth validation.
-    const authValidator = async (req, res, next) => {
+    const authValidator = async (req: express.Request, res: express.Response, next) => {
+        const ip = req.ip
+
+        // IP currently banned?
+        if (bannedIps[ip]) {
+            logger.error("Server.authValidator", ip, `IP banned since ${bannedIps[ip].toLocaleString()}`)
+            res.status(401).send("Access denied")
+            return
+        }
+
         const authHeader = req.headers.authorization || ""
         const authToken = authHeader.includes(" ") ? authHeader.split(" ")[1] : ""
 
         // Token passed as a bearer?
         if (authHeader.includes("Bearer")) {
             if (authToken !== settings.server.secret) {
+                authFailed(req)
+                res.status(401).send("Unauthorized")
+                return
+            }
+
+            next()
+            return
+        }
+
+        // Token passed as a query parameter?
+        if (req.params.secret) {
+            if (req.params.secret !== settings.server.secret) {
                 authFailed(req)
                 res.status(401).send("Unauthorized")
                 return
@@ -97,11 +118,21 @@ export const prepare = (): void => {
         const device = req.headers["x-device-name"] || getDevice(req.headers["user-agent"])
 
         try {
-            const ip = req.ip
             const ok = await cloudflare.ipBlock(ip, device as string)
             res.status(200).send(`Remove ${ip}: ${ok}`)
         } catch (ex) {
             res.status(500).send(`Failed to remove: ${ip}`)
+        }
+    })
+
+    // Return list of banned IPs due to failed authentication.
+    app.get("/banned", authValidator, async (req, res) => {
+        const ip = req.ip
+
+        try {
+            res.status(200).send(JSON.stringify(bannedIps, null, 2))
+        } catch (ex) {
+            res.status(500).send(`Failed to list banned IPs, from ${ip}`)
         }
     })
 }
