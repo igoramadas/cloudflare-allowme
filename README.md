@@ -17,14 +17,23 @@ A pratical, highly configurable Node.js service / tool to automatically manage a
     - [iOS Shortcuts](#ios-shortcuts)
 - [FAQ](#faq)
 
+![AllowMe diagram](docs/images/diagram.png)
+
 ## How does it work
 
-This service must be deployed to a platform accessible from anywhere (AWS, GCP, Azure, your own VPS, etc). It listens on port 8080 by default, and has 2 main endpoints:
+It's a simple REST API that takes care of allowing and blocking IP addresses on a pre-defined IP list on Cloudflare. This list can then be used by any firewall rule. Both resources (the list and the firewall rule) are created automatically by the service, when needed.
+
+The service must be deployed to a platform accessible from anywhere (AWS, GCP, Azure, your own VPS, etc). It listens on port 8080 by default, and has 2 main endpoints:
 
 - `/allow` to allow the client IP
 - `/block` to block the client IP
+- `/banned` - return list of IPs banned due to failed authentication
 
-You should call these endpoints (mostly the /allow) from your devices to add or remove your current IP address to the list of IPs allowed on your Cloudflare's zone firewall. IPs are then automatically removed from the list after some time (1 day by default).
+You should call these endpoints (mostly the /allow) from your devices to add or remove your current IP address to the Cloudflare IP list. It supports both IPv4 and IPv6.
+
+No cleanup is necessary, older IPs will be automatically removed from the list after a certain period of time.
+
+Everything above is highly customizable via environment variables.
 
 ### Ultra quick start
 
@@ -34,7 +43,7 @@ You should call these endpoints (mostly the /allow) from your devices to add or 
     - `$ALLOWME_CF_TOKEN` = your Cloudflare API token with the necessary permissions.
     - `$ALLOWME_SERVER_SECRET` = your custom secret / password used to authenticate to the service.
 3. Run the `igoramadas/cloudflare-allowme` Docker image with the variables above.
-4. Configure your mobile devices to ping the service's `/allow` endpoint regularly or via shortcuts.
+4. Configure your mobile devices to ping the service's `/allow` endpoint regularly, when the connection changes, or via shortcuts on your mobile launcher.
 5. Enjoy!
 
 ## Setup guide
@@ -43,7 +52,7 @@ You should have a zone (domain) already registered with Cloudflare. If you don't
 
 ### Cloudflare API token
 
-Mandatory. First step is to create an API token for the service. If you already have a token with the necessary permissions and want to reuse it, you can skip to step 6.
+Mandatory. First step is to create an API token for the service, which is needed to authenticate with Cloudflare. If you already have a token with the necessary permissions and want to reuse it, you can skip to step 6.
 
 1. Go to https://dash.cloudflare.com/profile/api-tokens.
 2. Click on the "Create token" button, then proceed to "Custom token" > "Get started". [⧉](./docs/images/api-tokens.png)
@@ -135,7 +144,7 @@ The service is fully configured via environment variables, either directly or vi
 | **ALLOWME_CF_LISTID** | string | Optional. The IP list ID, in case you don't want to have a dedicated "allowme" list. You can get the list ID from the URL of its edit page. If set, you'll have to configure the firewall rule manually (see the "Firewall rule" section above). |
 | | | |
 | **ALLOWME_SERVER_PORT** | number | Web server HTTP port. Defaults to "8080". |
-| **ALLOWME_SERVER_SECRET** * | string | The secret / token that you should pass to the service via the Authorization (Bearer) header, or as the password on the Basic Auth prompt. Mandatory. |
+| **ALLOWME_SERVER_SECRET** * | string | The secret / token that you should pass to the service via the "Authorization:Bearer" header, or the "secret" query string, or as the password on the Basic Auth prompt. Mandatory. |
 | **ALLOWME_SERVER_USER** | string | Username to be used on the Basic Auth prompt (see below). Defaults to "allowme". |
 | **ALLOWME_SERVER_PROMPT** | boolean | Optional, set to false to disable the Basic Auth prompt so only an Authorization (Bearer) header is accepted. |
 | **ALLOWME_SERVER_TRUSTPROXY** | boolean | Optional, set to false to disable parsing the client IP from _X-Forwarded-For_ headers. |
@@ -162,8 +171,15 @@ ALLOWME_SERVER_PROMPT=false
 | Method | Path | Details |
 | - | - | - |
 | GET | **/** | Redirect the user or display a text, depending on the `$ALLOWME_SERVER_HOME` variable |
-| GET | **/allow** | Add the client IP to the allow list
-| GET | **/block** | Remove the client IP from the allow list
+| GET | **/allow** | Add the client IP to the allow list |
+| GET | **/block** | Remove the client IP from the allow list |
+| GET | **/banned** | Return list of IPs banner due to failed authentication |
+
+### Authentication
+
+All endpoints except the root "/" require an `Authorization:Bearer $ALLOWME_SERVER_SECRET` header. If missing, a prompt should be displayed on the browser, asking for username (ALLOWME_SERVER_USER) and password (ALLOWME_SERVER_SECRET). If the `$ALLOWME_SERVER_PROMPT` is set to false, then the prompt will be disabled and the request will be rejected.
+
+In case you don't have access to the request headers, you can also pass the secret as a query parameter, like `/allowme?secret=ALLOWME_SERVER_SECRET`. But bear in mind that this is much less secure, as the secret will be likely get saved in the server logs.
 
 ### Securing with HTTPS
 
@@ -171,13 +187,13 @@ This service runs on HTTP only. You could use Cloudflare itself to have it runni
 
 If you decide to go with Caddy, have a look on [this other project](https://github.com/igoramadas/docker-caddy-cloudflare) of mine.
 
-If you decide to put this service behind Cloudflare, you can add a few extra security constraints using its firewall. For instance, restricting access to the service only to specific User Agents.
+If you decide to put the service behind Cloudflare, you can add a few extra security constraints using its firewall. For instance, restricting access to the service only to specific User Agents.
 
 ## Client configuration
 
 If you have an Android device, you can use automation applications like [Tasker](https://tasker.joaoapps.com/) or [Automate](https://llamalab.com/automate/) to automatically call the service endpoint when your connection state changes (ie. connect or disconnect from Wifi).
 
-### Tasker sample action
+### Android Tasker action
 
 ```xml
 <TaskerData sr="" dvi="1" tv="6.0.2-beta">
@@ -207,17 +223,17 @@ X-Device-Name:DEVICE_NAME_HERE</Str>
 </TaskerData>
 ```
 
-Replace the `YOUR.DOMAIN.COM` with your target host, `YOUR_SECRET_HERE` with your secret / token defined with `$ALLOWME_CF_TOKEN`, and `DEVICE_NAME_HERE` with the device identification.
+Replace the `YOUR.DOMAIN.COM` with your target host, `YOUR_SECRET_HERE` with your secret / token defined with `$ALLOWME_CF_TOKEN`, and `DEVICE_NAME_HERE` with the custom device identification.
 
 ### iOS Shortcuts
 
-I don't have iOS devices so I can test it for myself, but I think [Shortcuts](https://support.apple.com/en-gb/guide/shortcuts/welcome/ios) is your best bet. Simply create a shortcut that triggers a [request](https://support.apple.com/en-gb/guide/shortcuts/apd58d46713f/ios) to the /allow endpoint.
+I don't have iOS devices so I can't test it myself, but I think [Shortcuts](https://support.apple.com/en-gb/guide/shortcuts/welcome/ios) is your best bet. Simply create a shortcut that triggers a [request](https://support.apple.com/en-gb/guide/shortcuts/apd58d46713f/ios) to the /allow endpoint, passing the necessary token.
 
 ## FAQ
 
 ### How does it cleanup the list of allowed IPs?
 
-The service will get the list of allowed IPs from Cloudflare every hour, and remove all addresses that were added more than 24 hours ago by default. You can change this value by setting the `$ALLOWME_IP_MAXAGE` variable. You can also set it to "false" to disable the auto cleanup.
+The service will get the list of allowed IPs from Cloudflare every hour, and remove all addresses that were added more than 24 hours ago by default. You can change this value by setting the `$ALLOWME_IP_MAXAGE` variable, in minutes. You can also set it to "false" to disable the auto cleanup.
 
 Please note that only IPs added by the service will be removed. They have a "AllowMe" prefix on their comment. If you manually add an IP to the list, it will be left untouched.
 
@@ -227,7 +243,7 @@ Simplicity. The SSL / TLS part is better handled by a reverse proxy.
 
 ### Does it work with local IPs?
 
-Technically, yes, but I'm not sure if there's such a use case.
+I'm not sure if there's such a use case considering the scope of addresses is within Cloudflare. The service is hard coded to ignore the `::1` and `127.0.0.1` IPs.
 
 ### How does it identify the client's IP and device details?
 
