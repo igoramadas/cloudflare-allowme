@@ -46,10 +46,13 @@ export const parseIP = (ip: string): string => {
             return null
         }
 
-        // Convert IPv6 to /64.
+        // Convert and decompress IPv6 to /64.
         if (ip.includes(":")) {
             const ipv6 = ip.split(":")
             if (ipv6.length > 4) {
+                for (let i = 0; i < 4; i++) {
+                    if (ipv6[i] == "") ipv6[i] = "0"
+                }
                 return `${ipv6.slice(0, 4).join(":")}::/64`
             }
         }
