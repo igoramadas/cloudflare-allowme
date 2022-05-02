@@ -250,3 +250,15 @@ I'm not sure if there's such a use case considering the scope of addresses is wi
 The IP address comes from the `X-Forwarded-For` header, unless you have set `$ALLOWME_SERVER_TRUSTPROXY` to "false". If there's no header, it simply gets the client IP from the TCP connection itself.
 
 The device details are taken from the `User-Agent` header by default. If you want to set a custom device name, please pass it via the `X-Device-Name` header.
+
+### Can I manually add IPs to the Cloudflare list?
+
+Yes. IPs added manually and not prefixed with "AllowMe:" or "Expires:" will be left untouched.
+
+### Can I manually enforce an IP expiry date?
+
+Yes, by using a "Expires:" prefix. Simply set the comment of the IP entry as `Expires: YYYY-MM-DD HH:MM:SS`. The date format is important here - other formats might not be parsed properly.
+
+### Can "this or that" feature be implemented?
+
+Maybe. Please create an issue and I'll think about it.
