@@ -248,9 +248,18 @@ export const cleanup = async (): Promise<void> => {
                 const timestamp = ipTimestamp[item.ip] || 0
 
                 // Too old? Mark the IP for removal.
-                if (now - age > created && now - age > timestamp) {
+                if (now - age >= created && now - age >= timestamp) {
                     const device = item.comment.substring(commentPrefix.length + 1)
                     logger.info("Cloudflare.cleanup", item.ip, device, "Will be removed")
+                    data.items.push({id: item.id})
+                }
+            } else if (item.comment && item.comment.substring(0, 8).toLowerCase() == "expires:") {
+                const expire = item.comment.split(":")[1].trim()
+                const timestamp = new Date(expire).valueOf()
+
+                // Passed the expiry date?
+                if (now - age >= timestamp) {
+                    logger.info("Cloudflare.cleanup", item.ip, item.comment, "Will be removed")
                     data.items.push({id: item.id})
                 }
             }
