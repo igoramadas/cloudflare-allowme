@@ -31,7 +31,7 @@ export const prepare = (): void => {
 
     // Auth validation.
     const authValidator = async (req: express.Request, res: express.Response, next) => {
-        const ip = req.ip
+        const ip = getClientIP(req)
 
         // IP currently banned?
         if (bannedIps[ip]) {
@@ -86,7 +86,7 @@ export const prepare = (): void => {
 
     // Home route.
     app.get("/", async (req, res) => {
-        logger.info("Server.home", req.ip)
+        logger.info("Server.home", getClientIP(req))
 
         if (settings.server.home.substring(0, 8) == "https://") {
             res.redirect(settings.server.home)
@@ -98,7 +98,7 @@ export const prepare = (): void => {
 
     // Allow (add IP) route.
     app.get("/allow", authValidator, async (req, res) => {
-        const ip = req.ip
+        const ip = getClientIP(req)
         const device = req.headers["x-device-name"] || getDevice(req.headers["user-agent"])
 
         try {
@@ -114,7 +114,7 @@ export const prepare = (): void => {
 
     // Block (remove IP) route.
     app.get("/block", authValidator, async (req, res) => {
-        const ip = req.ip
+        const ip = getClientIP(req)
         const device = req.headers["x-device-name"] || getDevice(req.headers["user-agent"])
 
         try {
@@ -127,7 +127,7 @@ export const prepare = (): void => {
 
     // Return list of banned IPs due to failed authentication.
     app.get("/banned", authValidator, async (req, res) => {
-        const ip = req.ip
+        const ip = getClientIP(req)
 
         try {
             res.status(200).send(JSON.stringify(bannedIps, null, 2))
@@ -211,25 +211,37 @@ export const stop = (): void => {
         logger.error("Server.stop", ex)
     }
 }
+/**
+ * Gets the real IP of the client, depending on the trustProxy setting.
+ * @param req Request object.
+ */
+const getClientIP = (req: express.Request): string => {
+    if (!getBoolean(settings.server.trustProxy)) {
+        return req.ip
+    }
+
+    return (req.headers["cf-connecting-ip"] || req.headers["true-client-ip"] || req.ip).toString()
+}
 
 /**
  * Helper to manage and block failed IPs.
  * @param req Request object.
  */
-const authFailed = (req: express.Request) => {
+const authFailed = (req: express.Request): void => {
     const device = req.headers["x-device-name"] || getDevice(req.headers["user-agent"])
+    const ip = getClientIP(req)
 
-    if (!failedIps[req.ip]) {
-        failedIps[req.ip] = 1
+    if (!failedIps[ip]) {
+        failedIps[ip] = 1
     } else {
-        failedIps[req.ip]++
+        failedIps[ip]++
     }
 
-    if (parseInt(settings.ip.blockInterval) > 0 && failedIps[req.ip] >= 5) {
-        failedIps[req.ip]
-        bannedIps[req.ip] = new Date()
-        logger.warn("Server.authFailed", req.ip, device, "IP banned")
+    if (parseInt(settings.ip.blockInterval) > 0 && failedIps[ip] >= 5) {
+        failedIps[ip]
+        bannedIps[ip] = new Date()
+        logger.warn("Server.authFailed", ip, device, "IP banned")
     } else {
-        logger.warn("Server.authFailed", req.ip, device, `Count ${failedIps[req.ip]}`)
+        logger.warn("Server.authFailed", ip, device, `Count ${failedIps[ip]}`)
     }
 }

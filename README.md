@@ -1,6 +1,6 @@
 # Cloudflare AllowMe
 
-A pratical, highly configurable Node.js service / tool to automatically manage a list of allowed IPs in your Cloudflare's zone firewall. Very useful if you self-host and want to protect services like Home Assistant, Plex, WordPress etc.
+A practical, highly configurable Node.js service / tool to automatically manage a list of allowed IPs in your Cloudflare's zone firewall. Very useful if you self-host and want to protect services like Home Assistant, Plex, WordPress etc.
 
 - [How does it work](#how-does-it-work)
 - [Setup guide](#setup-guide)
@@ -23,7 +23,7 @@ A pratical, highly configurable Node.js service / tool to automatically manage a
 
 It's a simple REST API that takes care of allowing and blocking IP addresses on a pre-defined IP list on Cloudflare. This list can then be used by any firewall rule. Both resources (the list and the firewall rule) are created automatically by the service, when needed.
 
-The service must be deployed to a platform accessible from anywhere (AWS, GCP, Azure, your own VPS, etc). It listens on port 8080 by default, and has 2 main endpoints:
+The service must be deployed to a platform accessible from anywhere (AWS, GCP, Azure, your own VPS, etc). It listens on port 8080 by default, and has 3 main endpoints:
 
 - `/allow` to allow the client IP
 - `/block` to block the client IP
@@ -183,11 +183,11 @@ In case you don't have access to the request headers, you can also pass the secr
 
 ### Securing with HTTPS
 
-This service runs on HTTP only. You could use Cloudflare itself to have it running with HTTPS, or a self-hosted reverse proxy running next to the service instance: [nginx](https://docs.nginx.com/nginx/admin-guide/web-server/reverse-proxy/), [caddy](https://caddyserver.com/), [traefik](https://traefik.io/).
+This service runs on HTTP only. You should use Cloudflare itself to have it running with HTTPS, or a self-hosted reverse proxy running next to the service instance: [nginx](https://docs.nginx.com/nginx/admin-guide/web-server/reverse-proxy/), [caddy](https://caddyserver.com/), [traefik](https://traefik.io/).
 
 If you decide to go with Caddy, have a look on [this other project](https://github.com/igoramadas/docker-caddy-cloudflare) of mine.
 
-If you decide to put the service behind Cloudflare, you can add a few extra security constraints using its firewall. For instance, restricting access to the service only to specific User Agents.
+By putting the service behind Cloudflare, you can add a few extra security constraints using its firewall. For instance, restricting access to the service only to specific User Agents. If you decide to go with your your own reverse proxy, you'll need to take care of possible IP spoofing via headers.
 
 ## Client configuration
 
@@ -247,7 +247,13 @@ I'm not sure if there's such a use case considering the scope of addresses is wi
 
 ### How does it identify the client's IP and device details?
 
-The IP address comes from the `X-Forwarded-For` header, unless you have set `$ALLOWME_SERVER_TRUSTPROXY` to "false". If there's no header, it simply gets the client IP from the TCP connection itself.
+The IP address comes from the following headers:
+
+- CF-Connecting-IP
+- True-Client-IP
+- X-Forwarded-For
+
+If none of the headers above are present, it simply gets the client IP from the TCP connection itself. If you have set `$ALLOWME_SERVER_TRUSTPROXY` to "false", then it will ignore the headers altogether.
 
 The device details are taken from the `User-Agent` header by default. If you want to set a custom device name, please pass it via the `X-Device-Name` header.
 
