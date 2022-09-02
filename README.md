@@ -177,9 +177,9 @@ ALLOWME_SERVER_PROMPT=false
 
 ### Authentication
 
-All endpoints except the root "/" require an `Authorization:Bearer $ALLOWME_SERVER_SECRET` header. If missing, a prompt should be displayed on the browser, asking for username (ALLOWME_SERVER_USER) and password (ALLOWME_SERVER_SECRET). If the `$ALLOWME_SERVER_PROMPT` is set to false, then the prompt will be disabled and the request will be rejected.
+All endpoints except the root "/" require an `Authorization: Bearer $ALLOWME_SERVER_SECRET` header. If missing, a prompt should be displayed on the browser, asking for username (ALLOWME_SERVER_USER) and password (ALLOWME_SERVER_SECRET). If the `$ALLOWME_SERVER_PROMPT` is set to false, then the prompt will be disabled and the request will be rejected.
 
-In case you don't have access to the request headers, you can also pass the secret as a query parameter, like `/allowme?secret=ALLOWME_SERVER_SECRET`. But bear in mind that this is much less secure, as the secret will be likely get saved in the server logs.
+In case you don't have access to the request headers, you can also pass the secret as a query parameter, like `/allowme?secret=ALLOWME_SERVER_SECRET`. But bear in mind that this is  less secure, as the secret will likely appear in the server logs.
 
 ### Securing with HTTPS
 
@@ -223,19 +223,13 @@ X-Device-Name:DEVICE_NAME_HERE</Str>
 </TaskerData>
 ```
 
-Replace the `YOUR.DOMAIN.COM` with your target host, `YOUR_SECRET_HERE` with your secret / token defined with `$ALLOWME_CF_TOKEN`, and `DEVICE_NAME_HERE` with the custom device identification.
+Replace the `YOUR.DOMAIN.COM` with your target hostname or IP and port, `YOUR_SECRET_HERE` with your secret / token defined with `$ALLOWME_CF_TOKEN`, and `DEVICE_NAME_HERE` with the custom device identification.
 
 ### iOS Shortcuts
 
 I don't have iOS devices so I can't test it myself, but I think [Shortcuts](https://support.apple.com/en-gb/guide/shortcuts/welcome/ios) is your best bet. Simply create a shortcut that triggers a [request](https://support.apple.com/en-gb/guide/shortcuts/apd58d46713f/ios) to the /allow endpoint, passing the necessary token.
 
 ## FAQ
-
-### How does it cleanup the list of allowed IPs?
-
-The service will get the list of allowed IPs from Cloudflare every hour, and remove all addresses that were added more than 24 hours ago by default. You can change this value by setting the `$ALLOWME_IP_MAXAGE` variable, in minutes. You can also set it to "false" to disable the auto cleanup.
-
-Please note that only IPs added by the service will be removed. They have a "AllowMe" prefix on their comment. If you manually add an IP to the list, it will be left untouched.
 
 ### Why HTTP and not HTTPS?
 
@@ -245,6 +239,12 @@ Simplicity. The SSL / TLS part is better handled by a reverse proxy.
 
 I'm not sure if there's such a use case considering the scope of addresses is within Cloudflare. The service is hard coded to ignore the `::1` and `127.0.0.1` IPs.
 
+### How does it cleanup the list of allowed IPs?
+
+The service will get the list of allowed IPs from Cloudflare every hour, and remove all addresses older than 24 hours by default. You can change this value by setting the `$ALLOWME_IP_MAXAGE` variable, in minutes. You can also set it to "false" to disable the auto cleanup.
+
+Please note that only IPs added by the service will be removed. They have a "AllowMe" prefix on their comment. If you manually add an IP to the list, it will be left untouched.
+
 ### How does it identify the client's IP and device details?
 
 The IP address comes from the following headers:
@@ -253,7 +253,7 @@ The IP address comes from the following headers:
 - True-Client-IP
 - X-Forwarded-For
 
-If none of the headers above are present, it simply gets the client IP from the TCP connection itself. If you have set `$ALLOWME_SERVER_TRUSTPROXY` to "false", then it will ignore the headers altogether.
+If none of the headers above are present, it simply gets the client IP from the TCP connection itself. If you have set `$ALLOWME_SERVER_TRUSTPROXY` to "false", then it will ignore the headers altogether but you won't be able to host the service behind a reverse proxy.
 
 The device details are taken from the `User-Agent` header by default. If you want to set a custom device name, please pass it via the `X-Device-Name` header.
 
