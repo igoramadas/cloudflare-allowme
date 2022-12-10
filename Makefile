@@ -12,7 +12,7 @@ clean:
 	rm -f package-lock.json
 
 publish:
-	docker buildx build --push --platform linux/amd64,linux/arm64,linux/arm/v7 -t igoramadas/cloudflare-allowme .
+	docker buildx build --push --platform linux/amd64,linux/arm64 -t igoramadas/cloudflare-allowme .
 	npm publish
 
 run:
