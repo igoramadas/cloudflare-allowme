@@ -27,10 +27,10 @@ export const getDevice = (useragent: string): string => {
     const ua = uaParser(useragent)
     const result = []
 
-    if (ua.device && ua.device.vendor) result.push(ua.device.vendor)
-    if (ua.device && ua.device.model) result.push(ua.device.model)
-    if (ua.os && ua.os.name && result.length == 0) result.push(ua.os.name)
-    if (ua.browser && ua.browser.name) result.push(ua.browser.name)
+    if (ua.device?.vendor) result.push(ua.device.vendor)
+    if (ua.device?.model) result.push(ua.device.model)
+    if (ua.os?.name && result.length == 0) result.push(ua.os.name)
+    if (ua.browser?.name) result.push(ua.browser.name)
     if (result.length == 0) result.push(useragent.split[" "][0])
 
     return result.join(" ")

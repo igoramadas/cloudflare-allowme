@@ -243,7 +243,7 @@ export const cleanup = async (): Promise<void> => {
         const items = await getListItems()
 
         for (let item of items) {
-            if (item.comment && item.comment.substring(0, commentPrefix.length) == commentPrefix) {
+            if (item.comment?.substring(0, commentPrefix.length) == commentPrefix) {
                 const created = new Date(item.created_on).valueOf()
                 const timestamp = ipTimestamp[item.ip] || 0
 
@@ -253,7 +253,7 @@ export const cleanup = async (): Promise<void> => {
                     logger.info("Cloudflare.cleanup", item.ip, device, "Will be removed")
                     data.items.push({id: item.id})
                 }
-            } else if (item.comment && item.comment.substring(0, 8).toLowerCase() == "expires:") {
+            } else if (item.comment?.substring(0, 8).toLowerCase() == "expires:") {
                 const expire = item.comment.split(":")[1].trim()
                 const timestamp = new Date(expire).valueOf()
 
@@ -299,7 +299,7 @@ const makeRequest = async (path: string, method?: "GET" | "POST" | "DELETE", bod
         }
     } catch (ex) {
         if (ex.response) {
-            const details = ex.response.data && ex.response.data.errors ? ex.response.data.errors.map((e) => e.message).join(" | ") : ex.message
+            const details = ex.response.data?.errors ? ex.response.data.errors.map((e) => e.message).join(" | ") : ex.message
             throw new Error(`${ex.response.status} - ${details}`)
         } else {
             throw ex

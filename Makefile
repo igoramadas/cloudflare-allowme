@@ -20,6 +20,6 @@ run:
 	npm start
 
 update:
-	-ncu -u --target minor
+	-ncu -u
 	-npm install
 	$(TSC)
