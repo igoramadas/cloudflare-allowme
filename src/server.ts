@@ -9,7 +9,7 @@ import http from "http"
 
 let app: express.Application
 let server: http.Server
-let timer: NodeJS.Timer
+let timer: NodeJS.Timeout
 
 // List of failed and banned IPs due to failed authentication.
 // Please note that this is related to the AllowMe service
@@ -98,7 +98,7 @@ export const prepare = (): void => {
 
     // Allow (add IP) route.
     app.get("/allow", authValidator, async (req, res) => {
-        const ip = getClientIP(req)
+        const ip = (req.headers["x-device-ip"] as string) || getClientIP(req)
         const device = req.headers["x-device-name"] || getDevice(req.headers["user-agent"])
 
         try {
@@ -114,7 +114,7 @@ export const prepare = (): void => {
 
     // Block (remove IP) route.
     app.get("/block", authValidator, async (req, res) => {
-        const ip = getClientIP(req)
+        const ip = (req.headers["x-device-ip"] as string) || getClientIP(req)
         const device = req.headers["x-device-name"] || getDevice(req.headers["user-agent"])
 
         try {

@@ -20,7 +20,7 @@ export const getBoolean = (value: string): boolean => {
 }
 
 /**
- * Get a friendly device name baased on the passed user agent.
+ * Get a friendly device name based on the passed user agent.
  * @param useragent Client user agent string.
  */
 export const getDevice = (useragent: string): string => {

@@ -249,11 +249,14 @@ Please note that only IPs added by the service will be removed. They have a "All
 
 The IP address comes from the following headers:
 
+- X-Device-IP
 - CF-Connecting-IP
 - True-Client-IP
 - X-Forwarded-For
 
-If none of the headers above are present, it simply gets the client IP from the TCP connection itself. If you have set `$ALLOWME_SERVER_TRUSTPROXY` to "false", then it will ignore the headers altogether but you won't be able to host the service behind a reverse proxy.
+The `X-Device-IP` custom header is used to override the IP being allowed. Otherwise the service will use the default headers that are sent by Cloudflare itself.
+
+If none of the headers above are present, it simply gets the client IP from the TCP connection. If you have set `$ALLOWME_SERVER_TRUSTPROXY` to "false", then it will ignore the headers altogether but you won't be able to host the service behind a reverse proxy.
 
 The device details are taken from the `User-Agent` header by default. If you want to set a custom device name, please pass it via the `X-Device-Name` header.
 
