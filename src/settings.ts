@@ -7,8 +7,14 @@ if (!process.env.CF_ALLOWME_TOKEN) {
 /**
  * Service settings.
  */
-const settings = {
-    cloudflare: {
+export class Settings {
+    private constructor() {}
+    private static _instance: Settings
+    static get Instance() {
+        return this._instance || (this._instance = new this())
+    }
+
+    cloudflare = {
         // Cloudflare API token.
         token: process.env.ALLOWME_CF_TOKEN || "",
         // Cloudflare zone name (not needed if zoneId below is specified).
@@ -23,8 +29,9 @@ const settings = {
         listId: process.env.ALLOWME_CF_LISTID || "",
         // Cloudflare list name (fetched automatically).
         listName: null
-    },
-    server: {
+    }
+
+    server = {
         // Server port (defaults to 8080).
         port: process.env.ALLOWME_SERVER_PORT || "",
         // Server auth secret / password / token.
@@ -37,19 +44,19 @@ const settings = {
         trustProxy: process.env.ALLOWME_SERVER_TRUSTPROXY || "",
         // Home redirection (defaults to the GitHub repo), if missing the https:// will display that message instead.
         home: process.env.ALLOWME_SERVER_HOME || ""
-    },
-    ip: {
+    }
+    ip = {
         // Maximum IP age in minutes (defaults is 1440 = 2 days)
         maxAge: process.env.ALLOWME_IP_MAXAGE || "",
         // Block interval in minutes (defaults to 60 = 1 hour).
         blockInterval: process.env.ALLOWME_IP_BLOCKINTERVAL || "",
         // How many times can a single IP fail to authenticate before getting blocked (defaults to 5).
         denyCount: process.env.ALLOWME_IP_DENYCOUNT || ""
-    },
-    log: {
+    }
+    log = {
         // Logging level: none, error, info (defaults to info).
         level: process.env.ALLOWME_LOG_LEVEL || ""
     }
 }
 
-export default settings
+export default Settings.Instance
