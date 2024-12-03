@@ -1,7 +1,7 @@
 // Cloudflare AllowMe
 
-import logger = require("anyhow")
-import settings = require("./settings")
+import settings from "./settings.js"
+import logger from "anyhow"
 
 // Set the correct logging level.
 if (settings.log.level == "none") {

@@ -1,8 +1,8 @@
 // Cloudflare AllowMe: API client
 
 import {parseIP} from "./utils"
-import logger = require("anyhow")
-import settings = require("./settings")
+import settings from "./settings.js"
+import logger from "anyhow"
 import axios, {AxiosRequestConfig} from "axios"
 
 // IP items comments are prefixed with an AllowMe.

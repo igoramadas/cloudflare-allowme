@@ -1,10 +1,10 @@
 // Cloudflare AllowMe: Server
 
 import {getBoolean, getDevice} from "./utils"
-import logger = require("anyhow")
-import settings = require("./settings")
+import settings from "./settings.js"
 import * as cloudflare from "./cloudflare"
-import express = require("express")
+import logger from "anyhow"
+import express from "express"
 import http from "http"
 
 let app: express.Application

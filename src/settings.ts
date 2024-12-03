@@ -9,7 +9,7 @@ if (!process.env.CF_ALLOWME_TOKEN) {
  */
 const settings = {
     cloudflare: {
-        // Clodflare API token.
+        // Cloudflare API token.
         token: process.env.ALLOWME_CF_TOKEN || "",
         // Cloudflare zone name (not needed if zoneId below is specified).
         zone: process.env.ALLOWME_CF_ZONE || "",
@@ -52,4 +52,4 @@ const settings = {
     }
 }
 
-export = settings
+export default settings

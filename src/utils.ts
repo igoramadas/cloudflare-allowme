@@ -1,7 +1,7 @@
 // Cloudflare AllowMe: Utils
 
-import logger = require("anyhow")
-import uaParser = require("ua-parser-js")
+import logger from "anyhow"
+import {UAParser} from "ua-parser-js"
 
 /**
  * Helper to parse a string as boolean.
@@ -24,7 +24,7 @@ export const getBoolean = (value: string): boolean => {
  * @param useragent Client user agent string.
  */
 export const getDevice = (useragent: string): string => {
-    const ua = uaParser(useragent)
+    const ua = UAParser(useragent)
     const result = []
 
     if (ua.device?.vendor) result.push(ua.device.vendor)
