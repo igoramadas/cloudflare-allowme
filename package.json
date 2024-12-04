@@ -1,6 +1,6 @@
 {
     "name": "cloudflare-allowme",
-    "version": "1.4.1",
+    "version": "1.5.0",
     "description": "Simplistic Cloudflare firewall manager to allow source IPs on a specific Cloudflare zone.",
     "keywords": [
         "access",
@@ -18,10 +18,11 @@
         "url": "https://github.com/igoramadas/cloudflare-allowme.git"
     },
     "engines": {
-        "node": ">= 12.0"
+        "node": ">= 20.0"
     },
     "scripts": {
-        "prepublishOnly": "./node_modules/.bin/tsc --removeComments",
+        "build": "tsc",
+        "prepublishOnly": "tsc --removeComments",
         "start": "node lib/index.js"
     },
     "dependencies": {
