@@ -11,7 +11,7 @@ FROM node:alpine AS allowme-final
 WORKDIR /app
 ENV NODE_ENV=production
 COPY . .
-COPY --from=strautomator-web-builder ./app/lib ./lib
+COPY --from=allowme-builder ./app/lib ./lib
 RUN npm install --production
 EXPOSE 8080
 CMD ["npm", "start"]
