@@ -1,8 +1,6 @@
 // Cloudflare AllowMe: Settings
 
-if (!process.env.CF_ALLOWME_TOKEN) {
-    require("dotenv").config()
-}
+import "dotenv/config"
 
 /**
  * Service settings.
