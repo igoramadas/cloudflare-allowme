@@ -1,10 +1,10 @@
 {
     "compilerOptions": {
-        "baseUrl": "",
+        "strict": false,
         "rootDir": "src",
         "outDir": "lib",
-        "target": "es2023",
-        "module": "NodeNext",
+        "target": "es2025",
+        "module": "nodenext",
         "moduleResolution": "nodenext",
         "esModuleInterop": true,
         "noUnusedParameters": true,
