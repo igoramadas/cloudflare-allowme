@@ -60,7 +60,7 @@ Mandatory. First step is to create an API token for the service, which is needed
     - Account > Account Filter Lists > Edit
     - Account > Account Settings > Read
     - Zone > Zone > Read
-    - Zone > Zone WAF > Edit (optional)
+    - Zone > Zone WAF > Edit (needed to create and read the WAF custom rule)
 4. Include the account and zone resources:
     - Include > _MY_ACCOUNT_NAME_
     - Include > Specific zone > _MY_ZONE.TLD_
@@ -90,10 +90,10 @@ Optional. Pretty much like the IP list above, the service can automatically crea
 
 1. Go to the zone dashboard on Cloudflare.
 2. On the left sidebar, open "Security" > "WAF" (previously called Firewall Rules). [⧉](./docs/images/firewall.png)
-3. Click on the "Create firewall rule" button.
+3. Click on the "Create rule" button, under the "Custom rules" tab.
 4. Give it a name and the following properties:
     - Filter: "IP Source Address", "is in list", "allowme" (or the name of the list you have created manually)
-    - Action: "Allow"
+    - Action: "Skip" > "All remaining custom rules"
 5. Click "Deploy" to save.
 
 ### Running with Docker
