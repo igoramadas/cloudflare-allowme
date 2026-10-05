@@ -37,7 +37,10 @@ jobs:
               env:
                   ALLOWME_DOMAIN: ${{ secrets.ALLOWME_DOMAIN }}
                   ALLOWME_CF_ZONE: ${{ secrets.ALLOWME_CF_ZONE }}
-              run: npx wrangler deploy --domain "$ALLOWME_DOMAIN" --var "ALLOWME_CF_ZONE:$ALLOWME_CF_ZONE"
+              run: |
+                  : "${ALLOWME_DOMAIN:?Missing ALLOWME_DOMAIN secret}"
+                  : "${ALLOWME_CF_ZONE:?Missing ALLOWME_CF_ZONE secret}"
+                  npx wrangler deploy --domain "$ALLOWME_DOMAIN" --var "ALLOWME_CF_ZONE:$ALLOWME_CF_ZONE"
             - name: Update worker secrets
               env:
                   ALLOWME_CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
