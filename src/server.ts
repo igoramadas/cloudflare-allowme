@@ -88,6 +88,14 @@ export const prepare = (): void => {
     app.get("/", async (req, res) => {
         logger.info("Server.home", getClientIP(req))
 
+        // Cloudflare health probes can't follow redirects, so they get a plain 200.
+        const probeHost = req.hostname == "ping" || req.hostname == "containerstarthealthcheck"
+        const probeIp = req.socket.remoteAddress == "::ffff:10.1.0.0" && !req.headers["cf-connecting-ip"]
+        if (probeHost || probeIp) {
+            res.status(200).send("OK")
+            return
+        }
+
         if (settings.server.home.substring(0, 8) == "https://") {
             res.redirect(settings.server.home)
         } else {
