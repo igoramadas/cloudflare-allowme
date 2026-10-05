@@ -1,6 +1,6 @@
 // Cloudflare AllowMe: Worker entrypoint (routes HTTP to the AllowMe container).
 
-import {Container, getContainer} from "@cloudflare/containers"
+import {Container, getContainer, type StopParams} from "@cloudflare/containers"
 import {env} from "cloudflare:workers"
 
 /**
@@ -24,6 +24,16 @@ export class AllowMeContainer extends Container {
         ALLOWME_IP_BLOCKINTERVAL: env.ALLOWME_IP_BLOCKINTERVAL,
         ALLOWME_IP_DENYCOUNT: env.ALLOWME_IP_DENYCOUNT,
         ALLOWME_LOG_LEVEL: env.ALLOWME_LOG_LEVEL
+    }
+
+    // Surface container exits in the Worker logs (the container's own stdout is only in the dashboard).
+    onStop(params: StopParams) {
+        console.warn("AllowMeContainer stopped", JSON.stringify(params))
+    }
+
+    onError(error: unknown) {
+        console.error("AllowMeContainer error", error)
+        throw error
     }
 }
 

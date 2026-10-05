@@ -67,6 +67,7 @@ const run = async () => {
         server.start()
     } catch (ex) {
         logger.error("Index.run", ex)
+        process.exit(1)
     }
 }
 
