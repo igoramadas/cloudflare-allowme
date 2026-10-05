@@ -41,6 +41,9 @@ jobs:
                   : "${ALLOWME_DOMAIN:?Missing ALLOWME_DOMAIN secret}"
                   : "${ALLOWME_CF_ZONE:?Missing ALLOWME_CF_ZONE secret}"
                   npx wrangler deploy --domain "$ALLOWME_DOMAIN" --var "ALLOWME_CF_ZONE:$ALLOWME_CF_ZONE"
+            - name: Show wrangler log on failure
+              if: failure()
+              run: grep -h -i -E "error|status|code|message" ~/.config/.wrangler/logs/*.log | cut -c1-400 | tail -40
             - name: Update worker secrets
               env:
                   ALLOWME_CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
