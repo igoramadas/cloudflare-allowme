@@ -14,4 +14,4 @@ COPY . .
 COPY --from=allowme-builder ./app/lib ./lib
 RUN npm install --production
 EXPOSE 8080
-CMD ["npm", "start"]
+CMD ["node", "lib/index.js"]

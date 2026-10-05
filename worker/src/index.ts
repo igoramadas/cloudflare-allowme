@@ -3,6 +3,9 @@
 import {Container, getContainer, type StopParams} from "@cloudflare/containers"
 import {env} from "cloudflare:workers"
 
+// The lite instance has a fraction of a vCPU, so Node can take longer than the 20s default to listen.
+const PORT_READY_TIMEOUT = 90000
+
 /**
  * Durable Object that runs the AllowMe Docker image.
  */
@@ -40,12 +43,13 @@ export class AllowMeContainer extends Container {
 export default {
     async fetch(request: Request, env: Env): Promise<Response> {
         const container = getContainer(env.ALLOWME_CONTAINER)
+        await container.startAndWaitForPorts(8080, {portReadyTimeoutMS: PORT_READY_TIMEOUT})
         return container.fetch(request)
     },
 
     // Start (or keep) the singleton container so in-process hourly cleanup can run.
     async scheduled(_controller: ScheduledController, env: Env): Promise<void> {
         const container = getContainer(env.ALLOWME_CONTAINER)
-        await container.startAndWaitForPorts()
+        await container.startAndWaitForPorts(8080, {portReadyTimeoutMS: PORT_READY_TIMEOUT})
     }
 }
