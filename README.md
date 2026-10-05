@@ -9,6 +9,7 @@ A practical, highly configurable Node.js service / tool to automatically manage 
     - [Cloudflare firewall rule](#cloudflare-firewall-rule)
     - [Running with Docker](#running-with-docker)
     - [Running directly with Node.js](#running-directly-with-nodejs)
+    - [Running on Cloudflare Workers](#running-on-cloudflare-workers)
 - [Service configuration](#service-configuration)
 - [Endpoints](#endpoints)
     - [Securing with HTTPS](#securing-with-https)
@@ -131,6 +132,26 @@ If you choose to have it running directly on your environment, it's highly recom
 $ npm install pm2 -g
 $ pm2 start lib/index.js
 ```
+
+### Running on Cloudflare Workers
+
+The [worker](worker) folder has a Cloudflare Worker that runs the same Docker image as a [Cloudflare Container](https://developers.cloudflare.com/containers/) (requires the Workers Paid plan). The Worker forwards all requests to a single container, and a cron trigger wakes it up every hour so the IP cleanup keeps running.
+
+To deploy it from your machine (Docker must be running):
+
+```
+$ make worker-install
+$ cd worker
+$ npx wrangler secret put ALLOWME_CF_TOKEN
+$ npx wrangler secret put ALLOWME_SERVER_SECRET
+$ npx wrangler deploy --domain allowme.mydomain.com --var ALLOWME_CF_ZONE:mydomain.com
+```
+
+For local development, copy `worker/.dev.vars.example` to `worker/.dev.vars` and run `make worker-dev`.
+
+To deploy with GitHub Actions instead, see [.github/workflows/deploy-worker.yml](.github/workflows/deploy-worker.yml). It needs these repository secrets: `CLOUDFLARE_API_TOKEN` (with Workers and Containers deploy permissions), `CLOUDFLARE_ACCOUNT_ID`, `ALLOWME_DOMAIN`, `ALLOWME_CF_ZONE` and `ALLOWME_SERVER_SECRET`. Other settings from the table below can be added to `vars` in `worker/wrangler.jsonc`.
+
+Please note that the container is ephemeral: the list of IPs banned due to failed authentication is kept in memory and reset whenever the container restarts.
 
 ## Service configuration
 
