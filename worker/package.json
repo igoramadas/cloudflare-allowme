@@ -8,7 +8,7 @@
         "start": "wrangler dev"
     },
     "dependencies": {
-        "@cloudflare/containers": "0.0.30"
+        "@cloudflare/containers": "0.3.7"
     },
     "devDependencies": {
         "typescript": "5.9.3",
