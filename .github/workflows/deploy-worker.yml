@@ -42,4 +42,5 @@ jobs:
               env:
                   ALLOWME_CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
                   ALLOWME_SERVER_SECRET: ${{ secrets.ALLOWME_SERVER_SECRET }}
-              run: jq -n --arg t "$ALLOWME_CF_TOKEN" --arg s "$ALLOWME_SERVER_SECRET" '{ALLOWME_CF_TOKEN: $t, ALLOWME_SERVER_SECRET: $s}' | npx wrangler secret bulk
+              run: |
+                  jq -n --arg t "$ALLOWME_CF_TOKEN" --arg s "$ALLOWME_SERVER_SECRET" '{ALLOWME_CF_TOKEN: $t, ALLOWME_SERVER_SECRET: $s}' | npx wrangler secret bulk
