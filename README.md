@@ -138,9 +138,9 @@ The service is fully configured via environment variables, either directly or vi
 
 | VARIABLE | TYPE | DETAILS |
 | --- | --- | --- |
-| **ALLOWME_CF_TOKEN** * |  string | Your Cloudflare API token. Mandatory. |
+| **ALLOWME_CF_TOKEN** * |  string | Your Cloudflare API token. Falls back to `$CLOUDFLARE_API_TOKEN` if unset. |
 | **ALLOWME_CF_ZONE** * | string | The zone which should be updated, for example "mydomain.com". |
-| **ALLOWME_CF_ACCOUNTID** | string | If you have multiple accounts, you can set the ID of the correct account here. If unset, the service will use the main account. The account ID can be taken from your dashboard URL, it's the token string right after dash.cloudflare.com/. |
+| **ALLOWME_CF_ACCOUNTID** | string | If you have multiple accounts, you can set the ID of the correct account here. If unset, the service will use the main account. The account ID can be taken from your dashboard URL, it's the token string right after dash.cloudflare.com/. Falls back to `$CLOUDFLARE_ACCOUNT_ID` if unset. |
 | **ALLOWME_CF_LISTID** | string | Optional. The IP list ID, in case you don't want to have a dedicated "allowme" list. You can get the list ID from the URL of its edit page. If set, you'll have to configure the firewall rule manually (see the "Firewall rule" section above). |
 | | | |
 | **ALLOWME_SERVER_PORT** | number | Web server HTTP port. Defaults to "8080". |

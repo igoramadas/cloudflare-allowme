@@ -1,0 +1,4 @@
+# Copy to .dev.vars for local `npm run dev` (never commit .dev.vars).
+ALLOWME_CF_TOKEN=abc
+ALLOWME_SERVER_SECRET=abc
+ALLOWME_CF_ZONE=example.com

@@ -6,6 +6,5 @@
 bin/
 docs/
 node_modules/
-src/
 Makefile
-tsconfig.json
+worker/

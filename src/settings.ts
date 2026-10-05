@@ -13,12 +13,12 @@ export class Settings {
     }
 
     cloudflare = {
-        // Cloudflare API token.
-        token: process.env.ALLOWME_CF_TOKEN || "",
+        // Cloudflare API token (falls back to $CLOUDFLARE_API_TOKEN).
+        token: process.env.ALLOWME_CF_TOKEN || process.env.CLOUDFLARE_API_TOKEN || "",
         // Cloudflare zone name (not needed if zoneId below is specified).
         zone: process.env.ALLOWME_CF_ZONE || "",
-        // Cloudflare account ID (optional).
-        accountId: process.env.ALLOWME_CF_ACCOUNTID || "",
+        // Cloudflare account ID (optional, falls back to $CLOUDFLARE_ACCOUNT_ID).
+        accountId: process.env.ALLOWME_CF_ACCOUNTID || process.env.CLOUDFLARE_ACCOUNT_ID || "",
         // Cloudflare zone ID (fetched automatically).
         zoneId: null,
         // Cloudflare firewall rule ID (fetched automatically).

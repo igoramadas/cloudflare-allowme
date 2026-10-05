@@ -1,0 +1,41 @@
+// Cloudflare AllowMe: Worker entrypoint (routes HTTP to the AllowMe container).
+
+import {Container, getContainer} from "@cloudflare/containers"
+import {env} from "cloudflare:workers"
+
+/**
+ * Durable Object that runs the AllowMe Docker image.
+ */
+export class AllowMeContainer extends Container {
+    defaultPort = 8080
+    sleepAfter = "1h"
+    envVars = {
+        ALLOWME_CF_TOKEN: env.ALLOWME_CF_TOKEN,
+        ALLOWME_SERVER_SECRET: env.ALLOWME_SERVER_SECRET,
+        ALLOWME_CF_ZONE: env.ALLOWME_CF_ZONE,
+        ALLOWME_CF_ACCOUNTID: env.ALLOWME_CF_ACCOUNTID,
+        ALLOWME_CF_LISTID: env.ALLOWME_CF_LISTID,
+        ALLOWME_SERVER_PORT: env.ALLOWME_SERVER_PORT,
+        ALLOWME_SERVER_USER: env.ALLOWME_SERVER_USER,
+        ALLOWME_SERVER_PROMPT: env.ALLOWME_SERVER_PROMPT,
+        ALLOWME_SERVER_TRUSTPROXY: env.ALLOWME_SERVER_TRUSTPROXY,
+        ALLOWME_SERVER_HOME: env.ALLOWME_SERVER_HOME,
+        ALLOWME_IP_MAXAGE: env.ALLOWME_IP_MAXAGE,
+        ALLOWME_IP_BLOCKINTERVAL: env.ALLOWME_IP_BLOCKINTERVAL,
+        ALLOWME_IP_DENYCOUNT: env.ALLOWME_IP_DENYCOUNT,
+        ALLOWME_LOG_LEVEL: env.ALLOWME_LOG_LEVEL
+    }
+}
+
+export default {
+    async fetch(request: Request, env: Env): Promise<Response> {
+        const container = getContainer(env.ALLOWME_CONTAINER)
+        return container.fetch(request)
+    },
+
+    // Start (or keep) the singleton container so in-process hourly cleanup can run.
+    async scheduled(_controller: ScheduledController, env: Env): Promise<void> {
+        const container = getContainer(env.ALLOWME_CONTAINER)
+        await container.startAndWaitForPorts()
+    }
+}
