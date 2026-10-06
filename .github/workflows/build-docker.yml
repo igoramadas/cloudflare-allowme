@@ -1,4 +1,4 @@
-name: Auto build
+name: Build and Push to Docker
 on:
     schedule:
         - cron: "0 0 1 * *"
