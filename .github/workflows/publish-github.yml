@@ -1,25 +1,51 @@
 name: Publish Package to GitHub
 on:
     workflow_dispatch:
-    release:
-        types: [published]
+    push:
+        branches:
+            - "master"
+
+concurrency:
+    group: publish-github
+    cancel-in-progress: false
 
 jobs:
     publish:
         runs-on: ubuntu-latest
         permissions:
-            contents: read
+            contents: write
             packages: write
+        env:
+            GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         steps:
             - uses: actions/checkout@v4
+            - name: Check if the version is new
+              id: version
+              run: |
+                  VERSION=$(jq -r .version package.json)
+                  echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+                  if gh release view "v$VERSION" > /dev/null 2>&1; then
+                      echo "new=false" >> "$GITHUB_OUTPUT"
+                      echo "Release v$VERSION already exists, nothing to publish."
+                  else
+                      echo "new=true" >> "$GITHUB_OUTPUT"
+                  fi
             - uses: oven-sh/setup-bun@v2
+              if: steps.version.outputs.new == 'true'
             - uses: actions/setup-node@v4
+              if: steps.version.outputs.new == 'true'
               with:
                   node-version: 24
                   registry-url: https://npm.pkg.github.com
                   scope: "@igoramadas"
-            - run: bun install --frozen-lockfile
-            - run: npm pkg set name=@igoramadas/cloudflare-allowme
-            - run: npm publish
+            - name: Publish package
+              if: steps.version.outputs.new == 'true'
+              run: |
+                  bun install --frozen-lockfile
+                  npm pkg set name=@igoramadas/cloudflare-allowme
+                  npm publish
               env:
                   NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            - name: Create release
+              if: steps.version.outputs.new == 'true'
+              run: gh release create "v${{ steps.version.outputs.version }}" --target "$GITHUB_SHA" --title "v${{ steps.version.outputs.version }}" --generate-notes
