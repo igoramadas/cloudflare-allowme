@@ -11,14 +11,20 @@
     "author": "Igor Ramadas <igor@ramadas.net>",
     "homepage": "https://github.com/igoramadas/cloudflare-allowme",
     "license": "MIT",
-    "main": "lib/index.js",
-    "types": "lib/index.d.ts",
+    "bin": {
+        "allowme": "bin/allowme"
+    },
+    "files": [
+        "bin",
+        "lib"
+    ],
     "repository": {
         "type": "git",
         "url": "https://github.com/igoramadas/cloudflare-allowme.git"
     },
     "engines": {
-        "bun": ">= 1.2"
+        "bun": ">= 1.2",
+        "node": ">= 22"
     },
     "scripts": {
         "build": "tsc",
