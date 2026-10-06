@@ -1,6 +1,6 @@
 # HELPER COMMANDS
 
-TSC:= ./node_modules/.bin/tsc
+TSC:= bunx tsc
 
 build:
 	$(TSC)
@@ -9,18 +9,17 @@ build:
 clean:
 	rm -rf ./lib
 	rm -rf ./node_modules
-	rm -f package-lock.json
+	rm -f bun.lock
 
 publish:
 	npm publish
 
 run:
-	$(TSC)
-	npm start
+	bun start
 
 update:
-	-ncu -u
-	-npm install
+	-bunx npm-check-updates -u
+	-bun install
 	$(TSC)
 
 worker-install:

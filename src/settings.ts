@@ -1,7 +1,5 @@
 // Cloudflare AllowMe: Settings
 
-import "dotenv/config"
-
 /**
  * Service settings.
  */

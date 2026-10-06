@@ -1,17 +1,10 @@
 # CLOUDFLARE-ALLOWME
 
-# BUILDER
-FROM node:alpine AS allowme-builder
-WORKDIR /app
-COPY . .
-RUN npm install --prefer-online && npm run build
-
-# FINAL
-FROM node:alpine AS allowme-final
+FROM oven/bun:alpine
 WORKDIR /app
 ENV NODE_ENV=production
-COPY . .
-COPY --from=allowme-builder ./app/lib ./lib
-RUN npm install --production
+COPY package.json bun.lock* ./
+RUN bun install --production --frozen-lockfile
+COPY src ./src
 EXPOSE 8080
-CMD ["node", "lib/index.js"]
+CMD ["bun", "src/index.ts"]

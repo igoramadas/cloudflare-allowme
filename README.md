@@ -1,21 +1,21 @@
 # Cloudflare AllowMe
 
-A practical, highly configurable Node.js service / tool to automatically manage a list of allowed IPs in your Cloudflare's zone firewall. Very useful if you self-host and want to protect services like Home Assistant, Plex, WordPress etc.
+A practical, highly configurable Bun service / tool to automatically manage a list of allowed IPs in your Cloudflare's zone firewall. Very useful if you self-host and want to protect services like Home Assistant, Plex, Hermes, WordPress etc.
 
 - [How does it work](#how-does-it-work)
 - [Setup guide](#setup-guide)
-    - [Cloudflare API token](#cloudflare-api-token)
-    - [Cloudflare IP list](#cloudflare-ip-list)
-    - [Cloudflare firewall rule](#cloudflare-firewall-rule)
-    - [Running with Docker](#running-with-docker)
-    - [Running directly with Node.js](#running-directly-with-nodejs)
-    - [Running on Cloudflare Workers](#running-on-cloudflare-workers)
+  - [Cloudflare API token](#cloudflare-api-token)
+  - [Cloudflare IP list](#cloudflare-ip-list)
+  - [Cloudflare firewall rule](#cloudflare-firewall-rule)
+  - [Running with Docker](#running-with-docker)
+  - [Running directly with Bun](#running-directly-with-bun)
+  - [Running on Cloudflare Workers](#running-on-cloudflare-workers)
 - [Service configuration](#service-configuration)
 - [Endpoints](#endpoints)
-    - [Securing with HTTPS](#securing-with-https)
+  - [Securing with HTTPS](#securing-with-https)
 - [Client configuration](#client-configuration)
-    - [Tasker sample action](#tasker-sample-action)
-    - [iOS Shortcuts](#ios-shortcuts)
+  - [Tasker sample action](#tasker-sample-action)
+  - [iOS Shortcuts](#ios-shortcuts)
 - [FAQ](#faq)
 
 ![AllowMe diagram](docs/images/diagram.png)
@@ -24,7 +24,7 @@ A practical, highly configurable Node.js service / tool to automatically manage 
 
 It's a simple REST API that takes care of allowing and blocking IP addresses on a pre-defined IP list on Cloudflare. This list can then be used by any firewall rule. Both resources (the list and the firewall rule) are created automatically by the service, when needed.
 
-The service must be deployed to a platform accessible from anywhere (AWS, GCP, Azure, your own VPS, etc). It listens on port 8080 by default, and has 3 main endpoints:
+The service must be deployed to a platform accessible from anywhere (Cloudflare Workers, AWS, GCP, Azure, your own VPS, etc). It listens on port 8080 by default, and has 3 main endpoints:
 
 - `/allow` to allow the client IP
 - `/block` to block the client IP
@@ -40,15 +40,15 @@ Everything above is highly customizable via environment variables.
 
 1. Get your Cloudflare API token.
 2. Prepare the environment variables:
-    - `$ALLOWME_CF_ZONE` = your domain / zone.
-    - `$ALLOWME_CF_TOKEN` = your Cloudflare API token with the necessary permissions.
-    - `$ALLOWME_SERVER_SECRET` = your custom secret / password used to authenticate to the service.
+  - `$ALLOWME_CF_ZONE` = your domain / zone.
+  - `$ALLOWME_CF_TOKEN` = your Cloudflare API token with the necessary permissions.
+  - `$ALLOWME_SERVER_SECRET` = your custom secret / password used to authenticate to the service.
 3. Run the `igoramadas/cloudflare-allowme` Docker image with the variables above.
 4. Configure your mobile devices to ping the service's `/allow` endpoint regularly, when the connection changes, or via shortcuts on your mobile launcher.
 5. Enjoy!
 
 ## Setup guide
-
+# i5WD+MoQrGxKzRP1/jecyaywC8k5hnaDLTqES2Tvzx8=
 You should have a zone (domain) already registered with Cloudflare. If you don't, please follow [these steps](https://support.cloudflare.com/hc/en-us/articles/201720164-Creating-a-Cloudflare-account-and-adding-a-website).
 
 ### Cloudflare API token
@@ -58,13 +58,13 @@ Mandatory. First step is to create an API token for the service, which is needed
 1. Go to https://dash.cloudflare.com/profile/api-tokens.
 2. Click on the "Create token" button, then proceed to "Custom token" > "Get started". [⧉](./docs/images/api-tokens.png)
 3. Give the token a name (example: AllowMe), and the following permissions: [⧉](./docs/images/api-token-create.png)
-    - Account > Account Filter Lists > Edit
-    - Account > Account Settings > Read
-    - Zone > Zone > Read
-    - Zone > Zone WAF > Edit (needed to create and read the WAF custom rule)
+  - Account > Account Filter Lists > Edit
+  - Account > Account Settings > Read
+  - Zone > Zone > Read
+  - Zone > Zone WAF > Edit (needed to create and read the WAF custom rule)
 4. Include the account and zone resources:
-    - Include > _MY_ACCOUNT_NAME_
-    - Include > Specific zone > _MY_ZONE.TLD_
+  - Include > _MY_ACCOUNT_NAME_
+  - Include > Specific zone > _MY_ZONE.TLD_
 5. Click "Continue to summary", then "Save token".
 6. Copy the token value, it will be used as the `$ALLOWME_CF_TOKEN` variable.
 
@@ -83,7 +83,7 @@ If you already have an IP list that you want to reuse, you can simply grab its I
 2. Select the "Lists" tab.
 3. Click on "Edit" next to the list name.
 4. Get the list ID from the URL, to be used as the `$ALLOWME_CF_LISTID` variable: [⧉](./docs/images/ip-list-edit.png)
-    - Example: https://dash.cloudflare.com/account123/configurations/lists/LIST_ID
+  - Example: https://dash.cloudflare.com/account123/configurations/lists/LIST_ID
 
 ### Cloudflare firewall rule
 
@@ -93,8 +93,8 @@ Optional. Pretty much like the IP list above, the service can automatically crea
 2. On the left sidebar, open "Security" > "WAF" (previously called Firewall Rules). [⧉](./docs/images/firewall.png)
 3. Click on the "Create rule" button, under the "Custom rules" tab.
 4. Give it a name and the following properties:
-    - Filter: "IP Source Address", "is in list", "allowme" (or the name of the list you have created manually)
-    - Action: "Skip" > "All remaining custom rules"
+  - Filter: "IP Source Address", "is in list", "allowme" (or the name of the list you have created manually)
+  - Action: "Skip" > "All remaining custom rules"
 5. Click "Deploy" to save.
 
 ### Running with Docker
@@ -112,25 +112,25 @@ $ docker run -it --name cloudflare-allowme \
              igoramadas/cloudflare-allowme
 ```
 
-### Running directly with Node.js
+### Running directly with Bun
 
-First, make sure you have all dependencies installed:
+First, make sure you have [Bun](https://bun.sh) installed, then install the dependencies:
 
 ```
-$ npm install --production
+$ bun install --production
 ```
 
 Then (on the root of the application) to start the service it's as simple as:
 
 ```
-$ npm start
+$ bun start
 ```
 
 If you choose to have it running directly on your environment, it's highly recommended to use a process manager, for example [pm2](https://www.npmjs.com/package/pm2):
 
 ```
-$ npm install pm2 -g
-$ pm2 start lib/index.js
+$ bun add -g pm2
+$ pm2 start src/index.ts --interpreter bun
 ```
 
 ### Running on Cloudflare Workers
@@ -149,7 +149,7 @@ $ npx wrangler deploy --domain allowme.mydomain.com --var ALLOWME_CF_ZONE:mydoma
 
 For local development, copy `worker/.dev.vars.example` to `worker/.dev.vars` and run `make worker-dev`.
 
-To deploy with GitHub Actions instead, see [.github/workflows/deploy-worker.yml](.github/workflows/deploy-worker.yml). It needs these repository secrets: `CLOUDFLARE_API_TOKEN` (with Workers and Containers deploy permissions), `CLOUDFLARE_ACCOUNT_ID`, `ALLOWME_DOMAIN`, `ALLOWME_CF_ZONE` and `ALLOWME_SERVER_SECRET`. Other settings from the table below can be added to `vars` in `worker/wrangler.jsonc`.
+To deploy with GitHub Actions instead, see [.github/workflows/deploy-worker.yml](.github/workflows/deploy-worker.yml). It needs these repository secrets: `CLOUDFLARE_API_TOKEN` (with Workers and Containers deploy permissions), `CLOUDFLARE_ACCOUNT_ID`, `ALLOWME_DOMAIN`, `ALLOWME_CF_ZONE` and `ALLOWME_SERVER_SECRET`. Optionally set `ALLOWME_WORKER_NAME` to override the worker name (default `cloudflare-allowme`) and `ALLOWME_CONTAINER_NAME` for the container name. Other settings from the table below can be added to `vars` in `worker/wrangler.jsonc`.
 
 Please note that the container is ephemeral: the list of IPs banned due to failed authentication is kept in memory and reset whenever the container restarts.
 
@@ -169,7 +169,7 @@ The service is fully configured via environment variables, either directly or vi
 | **ALLOWME_SERVER_USER** | string | Username to be used on the Basic Auth prompt (see below). Defaults to "allowme". |
 | **ALLOWME_SERVER_PROMPT** | boolean | Optional, set to false to disable the Basic Auth prompt so only an Authorization (Bearer) header is accepted. |
 | **ALLOWME_SERVER_TRUSTPROXY** | boolean | Optional, set to false to disable parsing the client IP from _X-Forwarded-For_ headers. |
-| **ALLOWME_SERVER_HOME** | string | Optional, full URL to where users should be redirect if they git the root / path of the service. If missing the https://, this will be treated as text and that text will be displayed instead. Defaults to https://devv.com. |
+| **ALLOWME_SERVER_HOME** | string | Optional, full URL to where users should be redirect if they git the root / path of the service. If missing the https://, this will be treated as text and that text will be displayed instead. Defaults to https://ramadas.net. |
 | | | |
 | **ALLOWME_IP_MAXAGE** | number | How long (in minutes) IPs should stay in the allowed list. Defaults to 1440 (1 day). Set to 0 to disable auto removing IPs. |
 | **ALLOWME_IP_BLOCKINTERVAL** | number | How long (in minutes) IPs should be blocked in case of repeated authentication failures. Defaults to 60 minutes (1 hour). Set to 0 to disable blocking. |
@@ -181,7 +181,7 @@ The service is fully configured via environment variables, either directly or vi
 
 ```
 ALLOWME_CF_TOKEN=abc123abc123999000
-ALLOWME_CF_ZONE=devv.com
+ALLOWME_CF_ZONE=ramadas.net
 ALLOWME_SERVER_PORT=1234
 ALLOWME_SERVER_SECRET=mysecret
 ALLOWME_SERVER_PROMPT=false

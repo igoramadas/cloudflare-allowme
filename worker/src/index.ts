@@ -3,7 +3,7 @@
 import {Container, getContainer, type StopParams} from "@cloudflare/containers"
 import {env} from "cloudflare:workers"
 
-// The lite instance has a fraction of a vCPU, so Node can take longer than the 20s default to listen.
+// The lite instance has a fraction of a vCPU, so the service can take longer than the 20s default to listen.
 const PORT_READY_TIMEOUT = 60000
 
 /**

@@ -9,7 +9,7 @@ on:
             - "worker/**"
             - "Dockerfile"
             - "package.json"
-            - "package-lock.json"
+            - "bun.lock"
             - ".github/workflows/deploy-worker.yml"
 
 concurrency:
@@ -25,6 +25,7 @@ jobs:
         env:
             CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
             CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+            ALLOWME_WORKER_NAME: ${{ secrets.ALLOWME_WORKER_NAME || 'cloudflare-allowme' }}
         steps:
             - uses: actions/checkout@v4
             - uses: actions/setup-node@v4
@@ -44,10 +45,10 @@ jobs:
                   if [ -n "$ALLOWME_CONTAINER_NAME" ]; then
                       jq --arg n "$ALLOWME_CONTAINER_NAME" '.containers[0].name = $n' wrangler.jsonc > wrangler.tmp && mv wrangler.tmp wrangler.jsonc
                   fi
-                  npx wrangler deploy --domain "$ALLOWME_DOMAIN" --var "ALLOWME_CF_ZONE:$ALLOWME_CF_ZONE"
+                  npx wrangler deploy --name "$ALLOWME_WORKER_NAME" --domain "$ALLOWME_DOMAIN" --var "ALLOWME_CF_ZONE:$ALLOWME_CF_ZONE"
             - name: Update worker secrets
               env:
                   ALLOWME_CF_TOKEN: ${{ secrets.ALLOWME_CF_TOKEN || secrets.CLOUDFLARE_API_TOKEN }}
                   ALLOWME_SERVER_SECRET: ${{ secrets.ALLOWME_SERVER_SECRET }}
               run: |
-                  jq -n --arg t "$ALLOWME_CF_TOKEN" --arg s "$ALLOWME_SERVER_SECRET" '{ALLOWME_CF_TOKEN: $t, ALLOWME_SERVER_SECRET: $s}' | npx wrangler secret bulk
+                  jq -n --arg t "$ALLOWME_CF_TOKEN" --arg s "$ALLOWME_SERVER_SECRET" '{ALLOWME_CF_TOKEN: $t, ALLOWME_SERVER_SECRET: $s}' | npx wrangler secret bulk --name "$ALLOWME_WORKER_NAME"
