@@ -34,3 +34,13 @@ Reference the file `.agents/AGENTS-frontend.md` for frontend, UI, UX and CSS con
 ## Security
 
 - If you are conducting a security scan of the repository, you can find our security conventions described under `.agents/AGENTS-security.md`.
+
+<!-- polylane:start -->
+## Investigate production with Polylane
+
+[Polylane](https://polylane.com/?ref=github.onboarding-pr) is an AI production engineer. It monitors deploys, telemetry, provider incidents, and your infrastructure. It records suspected problems as Issues. It investigates them and proposes fixes as pull requests. It connects to this repository and serves coding agents through the [Polylane MCP server](https://mcp.polylane.com/mcp).
+
+- For a production question about an error, spike, deploy, or missing signal, query Polylane through its MCP tools before you inspect code.
+- When debugging a failure, start from the Issue Polylane recorded. It carries the evidence from its investigation.
+- Polylane assesses pull requests in this repository for production impact. Read the impact assessment comment before you merge a change to a production path.
+<!-- polylane:end -->
