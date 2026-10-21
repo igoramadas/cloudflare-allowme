@@ -259,7 +259,7 @@ export const ipBlock = async (ip: string, device: string): Promise<boolean> => {
         }
 
         // Finally remove the IP from the allowme list.
-        const data = {items: [{id: validIP}]}
+        const data = {items: [{id: ipItem.id}]}
         await makeRequest(`accounts/${settings.cloudflare.accountId}/rules/lists/${settings.cloudflare.listId}/items`, "DELETE", data)
 
         logger.info("Cloudflare.ipBlock", validIP, device, `Removed ${ipItem.id}`)
