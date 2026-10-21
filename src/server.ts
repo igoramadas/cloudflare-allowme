@@ -56,8 +56,8 @@ export const prepare = (): void => {
         }
 
         // Token passed as a query parameter?
-        if (req.params.secret) {
-            if (req.params.secret !== settings.server.secret) {
+        if (req.query.secret) {
+            if (req.query.secret !== settings.server.secret) {
                 authFailed(req)
                 res.status(401).send("Unauthorized")
                 return
