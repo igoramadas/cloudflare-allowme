@@ -200,7 +200,7 @@ ALLOWME_SERVER_PROMPT=false
 
 All endpoints except the root "/" require an `Authorization: Bearer $ALLOWME_SERVER_SECRET` header. If missing, a prompt should be displayed on the browser, asking for username (ALLOWME_SERVER_USER) and password (ALLOWME_SERVER_SECRET). If the `$ALLOWME_SERVER_PROMPT` is set to false, then the prompt will be disabled and the request will be rejected.
 
-In case you don't have access to the request headers, you can also pass the secret as a query parameter, like `/allowme?secret=ALLOWME_SERVER_SECRET`. But bear in mind that this is  less secure, as the secret will likely appear in the server logs.
+In case you don't have access to the request headers, you can also pass the secret as a query parameter, like `/allow?secret=ALLOWME_SERVER_SECRET`. But bear in mind that this is  less secure, as the secret will likely appear in the server logs.
 
 ### Securing with HTTPS
 
