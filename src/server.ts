@@ -244,7 +244,7 @@ const authFailed = (req: express.Request): void => {
         failedIps[ip]++
     }
 
-    if (parseInt(settings.ip.blockInterval) > 0 && failedIps[ip] >= 5) {
+    if (parseInt(settings.ip.blockInterval) > 0 && failedIps[ip] >= parseInt(settings.ip.denyCount)) {
         failedIps[ip]
         bannedIps[ip] = new Date()
         logger.warn("Server.authFailed", ip, device, "IP banned")

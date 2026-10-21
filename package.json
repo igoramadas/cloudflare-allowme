@@ -32,14 +32,14 @@
         "start": "bun src/index.ts"
     },
     "dependencies": {
-        "anyhow": "^3.4.0",
+        "anyhow": "^4.0.0",
         "axios": "^1.20.0",
-        "express": "^5.2.1",
+        "express": "^5.3.0",
         "ua-parser-js": "^2.0.10"
     },
     "devDependencies": {
         "@types/express": "^5.0.6",
-        "@types/bun": "^1.4.2",
+        "@types/bun": "^1.4.3",
         "@types/ua-parser-js": "^0.7.39",
         "typescript": "^7.0.2"
     },
