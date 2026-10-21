@@ -1,0 +1,67 @@
+---
+title: "Lockfile"
+description: "Bun's lockfile format and configuration"
+---
+
+`bun install` creates a lockfile called `bun.lock`.
+
+#### Should it be committed to git?
+
+Yes
+
+#### Generate a lockfile without installing?
+
+To generate a lockfile without installing to `node_modules`, use the `--lockfile-only` flag. Bun always saves the lockfile to disk, even if it is already up to date with your project's `package.json`(s). The exception is when `--frozen-lockfile` (or `--production`) is set.
+
+```bash terminal icon="terminal"
+bun install --lockfile-only
+```
+
+`bun add`, `bun remove`, and `bun update` also accept `--lockfile-only`.
+
+<Note>
+  `--lockfile-only` still populates the global install cache with registry metadata and git/tarball dependencies.
+</Note>
+
+#### Can I opt out?
+
+To install without creating a lockfile:
+
+```bash terminal icon="terminal"
+bun install --no-save
+```
+
+To write a Yarn lockfile _in addition_ to `bun.lock`:
+
+<CodeGroup>
+
+```bash terminal icon="terminal"
+bun install --yarn
+```
+
+```toml bunfig.toml icon="settings"
+[install.lockfile]
+# whether to save a non-Bun lockfile alongside bun.lock
+# only "yarn" is supported
+print = "yarn"
+```
+
+</CodeGroup>
+
+#### Text-based lockfile
+
+Bun v1.2 changed the default lockfile format to the text-based `bun.lock`. To migrate an existing binary `bun.lockb`, run `bun install --save-text-lockfile --frozen-lockfile --lockfile-only` and delete `bun.lockb`.
+
+For more on the format, see [the blog post](https://bun.com/blog/bun-lock-text-lockfile).
+
+#### Automatic lockfile migration
+
+When you run `bun install` in a project without a `bun.lock`, Bun automatically migrates existing lockfiles:
+
+- `yarn.lock` (v1)
+- `package-lock.json` (npm, `lockfileVersion` 2, 3 or 4)
+- `pnpm-lock.yaml` (pnpm)
+
+Bun does not migrate a `package-lock.json` from npm 6 or older (`lockfileVersion` 1); it prints a warning and resolves from `package.json` instead.
+
+Bun preserves the original lockfile. You can remove it manually after verification.

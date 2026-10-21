@@ -1,0 +1,461 @@
+---
+title: "bun pm"
+description: "Package manager utilities"
+---
+
+The `bun pm` command group is a set of utilities for working with Bun's package manager.
+
+## pack
+
+To create a tarball of the current workspace:
+
+```bash terminal icon="terminal"
+bun pm pack
+```
+
+`bun pm pack` creates a `.tgz` file containing all files that would be published to npm, following the same rules as `npm pack`.
+
+## Examples
+
+Basic usage:
+
+```bash terminal icon="terminal"
+bun pm pack
+# Creates my-package-1.0.0.tgz in current directory
+```
+
+Quiet mode for scripting:
+
+```bash terminal icon="terminal"
+TARBALL=$(bun pm pack --quiet)
+echo "Created: $TARBALL"
+```
+
+```txt
+Created: my-package-1.0.0.tgz
+```
+
+Custom destination:
+
+```bash terminal icon="terminal"
+bun pm pack --destination ./dist
+# Saves tarball in ./dist/ directory
+```
+
+## Options
+
+- `--dry-run`: Perform all tasks except writing the tarball to disk. Shows what would be included.
+- `--destination <dir>`: The directory to save the tarball in.
+- `--filename <name>`: An exact file name for the tarball.
+- `--ignore-scripts`: Skip running pre/postpack and prepare scripts.
+- `--gzip-level <0-9>`: Set the gzip compression level, from 0 to 9 (default 9).
+- `--quiet`: Print only the tarball filename, suppressing the rest of the output. Useful in scripts.
+
+> **Note:** `--filename` and `--destination` cannot be used at the same time.
+
+## Output Modes
+
+**Default output:**
+
+```bash terminal icon="terminal"
+bun pm pack
+```
+
+```txt
+bun pack v1.2.19
+
+packed 131B package.json
+packed 40B index.js
+
+my-package-1.0.0.tgz
+
+Total files: 2
+Shasum: f2451d6eb1e818f500a791d9aace80b394258a90
+Unpacked size: 171B
+Packed size: 249B
+```
+
+**Quiet output:**
+
+```bash terminal icon="terminal"
+bun pm pack --quiet
+```
+
+```txt
+my-package-1.0.0.tgz
+```
+
+## bin
+
+To print the path to the `bin` directory for the local project:
+
+```bash terminal icon="terminal"
+bun pm bin
+```
+
+```txt
+/path/to/current/project/node_modules/.bin
+```
+
+To print the path to the global `bin` directory:
+
+```bash terminal icon="terminal"
+bun pm bin -g
+```
+
+```txt
+<$HOME>/.bun/bin
+```
+
+## ls
+
+To print a list of installed dependencies in the current project and their resolved versions, excluding their dependencies:
+
+```bash terminal icon="terminal"
+bun pm ls
+# or
+bun list
+```
+
+```txt
+/path/to/project node_modules (135 installed)
+├── eslint@8.38.0
+├── react@18.2.0
+├── react-dom@18.2.0
+├── typescript@5.0.4
+└── zod@3.21.4
+```
+
+To print all installed dependencies, including nth-order dependencies:
+
+```bash terminal icon="terminal"
+bun pm ls --all
+# or
+bun list --all
+```
+
+```txt
+/path/to/project node_modules (135 installed)
+├── @eslint-community/eslint-utils@4.4.0
+├── @eslint-community/regexpp@4.5.0
+├── @eslint/eslintrc@2.0.2
+├── @eslint/js@8.38.0
+├── @nodelib/fs.scandir@2.1.5
+├── @nodelib/fs.stat@2.0.5
+├── @nodelib/fs.walk@1.2.8
+├── acorn@8.8.2
+├── acorn-jsx@5.3.2
+├── ajv@6.12.6
+├── ansi-regex@5.0.1
+├── ...
+```
+
+To print only trusted dependencies (those allowed to run [lifecycle scripts](/docs/pm/lifecycle)). When `trustedDependencies` is set in `package.json`, Bun shows the packages from that list; otherwise it shows packages from its [default trusted dependencies](https://github.com/oven-sh/bun/blob/main/src/install/default-trusted-dependencies.txt) list.
+
+```bash terminal icon="terminal"
+bun pm ls --trusted
+# or
+bun list --trusted
+```
+
+```txt
+/path/to/project node_modules (135 installed)
+└── esbuild@0.21.5
+```
+
+## licenses
+
+List every installed package grouped by license, as read from each package's `package.json` in `node_modules`. Bun lists packages without a `license` field under `Unknown`. Bun marks packages only reachable through `devDependencies` with `(dev)`.
+
+```bash terminal icon="terminal"
+bun pm licenses
+# or
+bun pm licenses ls
+```
+
+```txt
+bun pm licenses v1.3.0 (a4b2f86f)
+
+MIT (2)
+├── path-parse@1.0.6
+└── resolve@1.9.0
+
+Unknown (4)
+├── a-dep@1.0.1 (dev)
+├── no-deps@1.0.0
+├── no-deps@1.0.1
+└── one-dep@1.0.0
+
+6 packages across 2 licenses (checked 6 packages in bun.lock) [4.00ms]
+```
+
+| Flag                           | Description                                                                     |
+| ------------------------------ | ------------------------------------------------------------------------------- |
+| `--json`                       | Print a JSON object keyed by license                                            |
+| `--long`                       | Also print each package's `author`, `description`, and `homepage`               |
+| `--prod`, `-p`                 | Skip `devDependencies` (same as `--omit=dev`)                                   |
+| `--dev`, `-D`                  | Only list what `devDependencies` pull in                                        |
+| `--omit=<dev\|optional\|peer>` | Skip a dependency type, as with `bun install`                                   |
+| `--filter <pattern>`, `-F`     | Only list dependencies of the matching workspaces ([filter syntax](/docs/pm/filter)) |
+
+```bash terminal icon="terminal"
+bun pm licenses --json --prod
+```
+
+```json
+{
+  "MIT": [
+    {
+      "name": "path-parse",
+      "versions": ["1.0.6"],
+      "paths": ["/home/me/app/node_modules/path-parse"],
+      "license": "MIT",
+      "homepage": "https://github.com/jbgutierrez/path-parse#readme",
+      "author": "Javier Blanco <http://jbgutierrez.info>",
+      "description": "Node.js path.parse() ponyfill"
+    }
+  ]
+}
+```
+
+From a workspace root, Bun lists every workspace's dependencies. From inside a workspace package, Bun lists only that package's dependencies. Use [`bun why`](/docs/pm/cli/why) to find out what pulls in an unexpected package.
+
+Requires both `bun.lock` and `node_modules`. Bun skips packages that are in the lockfile but missing from `node_modules` (e.g. after `bun install --production`) and prints a warning.
+
+## diff
+
+Show what changed between two versions of a package: a summary of the files and lines touched, the `package.json` changes worth a second look (new install scripts, dependencies, entry points, binaries), then a unified diff of every file. Each side can be a registry spec, a local folder, or a `.tgz`.
+
+```bash terminal icon="terminal"
+bun pm diff react                     # the version in bun.lock → latest
+bun pm diff react@18.2.0 19.0.0       # two published versions
+bun pm diff react@18.2.0..19.0.0      # same thing
+bun pm diff ./vendored-pkg pkg@2.1.0  # a folder against a published version
+bun pm diff                           # in a package folder: what is published → this folder
+```
+
+```txt
+is-number@6.0.0 → is-number@7.0.0
+4 files changed, 0 added, 0 removed  (+73 -44 lines)
+
+  ! engines changed: { "node": ">=0.10.0" } → { "node": ">=0.12.0" }
+
+diff --bun a/index.js b/index.js
+--- a/index.js
++++ b/index.js
+@@ -9,10 +9,10 @@
+ module.exports = function(num) {
+   if (typeof num === 'number') {
+-    return num - num === 0;
++    return num - num === 0;
+   }
+...
+```
+
+On a terminal, code is compared by meaning and shown as written. Both sides of every `.js`/`.mjs`/`.cjs`/`.jsx`/`.ts`/`.tsx` file are parsed and re-printed in one canonical form (equivalent syntax folded, unreachable code dropped); that canonical form decides _what changed_, and the hunks show the _original_ lines — comments, types, JSX and names intact:
+
+- `1 + 1` vs `2`, `'a'` vs `"a"`, `!0` vs `true`, a re-wrapped call, a whole-file reformat, or a local renamed consistently everywhere (a bundler's `utils` → `utils$1`) are not changes — locals on both sides are matched by how they are used, never by what they are called. Lines folded away this way are counted in the file header (`3 folded`), and a file with nothing left reads `formatting only`.
+- A comment edit, a changed type annotation, or any change in control flow is a change, shown in the author's words.
+- Unchanged text whose meaning moved — code that became unreachable, or dead code that came alive because a condition elsewhere flipped — is marked `~`.
+- Minified bundles have no readable original, so an un-minified re-print stands in for it (one declaration, call and property per line, each numbered by its `line:col` in the original) and the same folded comparison decides what changed — with the short names two builds' minifiers handed out differently renamed in lockstep; `dist/*.min.js` diffs down to the lines that actually changed rather than one enormous `-`/`+` pair. `.json` and `.css` files are compared and shown as their canonical print (`normalized`), so a reformat around one edit is one edit; identical prints read `formatting only`.
+- The summary at the end calls out what a reviewer looks for first: new `install`/`postinstall` scripts, dependency and entry-point changes, a file that newly imports `child_process`/`fs`/`net`/`http`/`vm`/…, new package imports, growth in `eval()` / `new Function()` / `process.env` / `fetch()` use, newly executable files, and terminal escape sequences or bidirectional-text controls appearing in a release. `*.map` files are summarised as regenerated rather than shown. Files over 64 MB are diffed as text (`too large to normalize`).
+- Line tints follow the terminal: light or dark is taken from `COLORFGBG` or by asking the terminal for its background colour (OSC 11), and exact colours are used when `COLORTERM=truecolor`.
+- Nothing in a package can drive your terminal: control characters, escape sequences and bidirectional-text overrides in file contents are drawn as `␛`, `^M`, `‹U+202E›`. Permission changes show as `mode 644 → 755` / `new file mode 100755`.
+
+To look at part of a package, name the files: as a `:path` suffix on a spec, as a bare `:path` argument, or as extra arguments after the two sides. A path matches a file exactly, a directory, a file name anywhere in the package, or a glob:
+
+```bash
+$ bun pm diff axios@1.6.0:lib/adapters 1.6.1          # one directory
+$ bun pm diff axios@1.6.0 axios@1.6.1 dist/node/axios.cjs README.md
+$ bun pm diff lodash :trimEnd.js                       # installed → latest, one file
+$ bun pm diff react-dom@18.2.0 18.3.1 '*.min.js'
+$ bun pm diff react-dom@18.2.0 18.3.1 'cjs/**/*.production.min.js'
+```
+
+A local folder that has a `package.json` is read the way `bun pm pack` would publish it — the `files` field, `.npmignore` / `.gitignore`, `bin` — so diffing a checkout against the registry compares what would ship, not `node_modules/`, `vendor/` or build output.
+
+Piped or with `NO_COLOR`, the output is a plain unified patch of the real file contents (so `bun pm diff a b > changes.patch` applies), and `--raw` turns the re-print off on a terminal too.
+
+| Flag                     | Description                                                                                          |
+| ------------------------ | ---------------------------------------------------------------------------------------------------- |
+| `--raw`, `--unformatted` | Compare bytes as-is; skip the JS/CSS/JSON re-print                                                   |
+| `--minify`               | Also fold equivalent syntax (`!0`/`true`, quote style, redundant parens) so only meaning is compared |
+| `--unminify`             | Rename short locals in lockstep in every JS file, not just ones that look minified                   |
+| `-w`, `--ignore-space`   | On a terminal, show files that differ only in whitespace as `whitespace only` instead of hunks       |
+| `--stat`                 | One line per file with a change count and bar instead of the hunks                                   |
+| `--name-only`            | Only list the files that differ, marked `A`dded / `M`odified / `D`eleted                             |
+| `-U <n>`, `--unified`    | Lines of context around each change (default 3)                                                      |
+| `--diff <spec>`          | npm-compatible way to name a side; may be given twice                                                |
+| `--json`                 | One JSON document: `from`/`to`, per-file `status`/counts/`patch`, plain-text `notes`, and `totals`   |
+
+With one name and no version, the left side is the version this project's `bun.lock` resolved and the right side is `latest`, so `bun pm diff <pkg>` answers "what would updating this pull in?". Registry, scope and auth settings come from `bunfig.toml` / `.npmrc` as for `bun install`; outside a project only registry specs and absolute or `./` paths are accepted.
+
+## whoami
+
+Print your npm username. Requires you to be logged in (`bunx npm login`) with credentials in either `bunfig.toml` or `.npmrc`:
+
+```bash terminal icon="terminal"
+bun pm whoami
+```
+
+## hash
+
+To generate and print the hash of the current lockfile:
+
+```bash terminal icon="terminal"
+bun pm hash
+```
+
+To print the string used to hash the lockfile:
+
+```bash terminal icon="terminal"
+bun pm hash-string
+```
+
+To print the hash stored in the current lockfile:
+
+```bash terminal icon="terminal"
+bun pm hash-print
+```
+
+## cache
+
+To print the path to Bun's global module cache:
+
+```bash terminal icon="terminal"
+bun pm cache
+```
+
+To clear Bun's global module cache:
+
+```bash terminal icon="terminal"
+bun pm cache rm
+```
+
+## migrate
+
+To migrate another package manager's lockfile without installing anything:
+
+```bash terminal icon="terminal"
+bun pm migrate
+```
+
+## untrusted
+
+To print current untrusted dependencies with scripts:
+
+```bash terminal icon="terminal"
+bun pm untrusted
+```
+
+```txt
+./node_modules/@biomejs/biome @1.8.3
+ » [postinstall]: node scripts/postinstall.js
+
+These dependencies had their lifecycle scripts blocked during install.
+```
+
+## trust
+
+To run scripts for untrusted dependencies and add to `trustedDependencies`:
+
+```bash terminal icon="terminal"
+bun pm trust <names>
+```
+
+Options for the `trust` command:
+
+- `--all`: Trust all untrusted dependencies.
+
+## default-trusted
+
+To print the default trusted dependencies list:
+
+```bash terminal icon="terminal"
+bun pm default-trusted
+```
+
+See the [current list on GitHub](https://github.com/oven-sh/bun/blob/main/src/install/default-trusted-dependencies.txt).
+
+## version
+
+To display current package version and help:
+
+```bash terminal icon="terminal"
+bun pm version
+```
+
+```txt
+bun pm version v1.3.3 (ca7428e9)
+Current package version: v1.0.0
+
+Increment:
+  patch      1.0.0 → 1.0.1
+  minor      1.0.0 → 1.1.0
+  major      1.0.0 → 2.0.0
+  prerelease 1.0.0 → 1.0.1-0
+  prepatch   1.0.0 → 1.0.1-0
+  preminor   1.0.0 → 1.1.0-0
+  premajor   1.0.0 → 2.0.0-0
+  from-git   Use version from latest git tag
+  1.2.3      Set specific version
+
+Options:
+  --no-git-tag-version Skip git operations
+  --allow-same-version Prevents throwing error if version is the same
+  --message=<val>, -m  Custom commit message, use %s for version substitution
+  --preid=<val>        Prerelease identifier (i.e beta → 1.0.1-beta.0)
+  --force, -f          Bypass dirty git history check
+
+Examples:
+  bun pm version patch
+  bun pm version 1.2.3 --no-git-tag-version
+  bun pm version prerelease --preid beta --message "Release beta: %s"
+```
+
+To bump the version in `package.json`:
+
+```bash terminal icon="terminal"
+bun pm version patch
+```
+
+```txt
+v1.0.1
+```
+
+Supports `patch`, `minor`, `major`, `premajor`, `preminor`, `prepatch`, `prerelease`, `from-git`, or specific versions like `1.2.3`. By default it creates a git commit and tag; pass `--no-git-tag-version` to skip them.
+
+## pkg
+
+Manage `package.json` data with get, set, delete, and fix operations.
+
+All commands support dot and bracket notation:
+
+```bash terminal icon="terminal"
+scripts.build              # dot notation
+contributors[0]            # array access
+workspaces.0               # dot with numeric index
+scripts[test:watch]        # bracket for special chars
+```
+
+Examples:
+
+```bash terminal icon="terminal"
+# get
+bun pm pkg get name                               # single property
+bun pm pkg get name version                       # multiple properties
+bun pm pkg get                                    # entire package.json
+bun pm pkg get scripts.build                      # nested property
+
+# set
+bun pm pkg set name="my-package"                  # simple property
+bun pm pkg set scripts.test="jest" version=2.0.0  # multiple properties
+bun pm pkg set private=true --json                # JSON values with --json flag
+
+# delete
+bun pm pkg delete description                     # single property
+bun pm pkg delete scripts.test contributors[0]    # multiple/nested
+
+# fix
+bun pm pkg fix                                    # auto-fix common issues
+```
