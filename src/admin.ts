@@ -140,7 +140,7 @@ input[type=text], input[type=password] {
     min-width: 0;
 }
 input:focus { border-color: var(--accent); }
-input[type=text] { flex: 1; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; }
+input[type=text] { flex: 1 1 140px; min-width: 140px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; }
 .empty { color: var(--muted); font-size: 13px; padding: 8px; }
 #toast {
     position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(80px);
@@ -169,6 +169,7 @@ input[type=text] { flex: 1; font-family: ui-monospace, SFMono-Regular, Menlo, Co
 @media (max-width: 560px) {
     .card .value { font-size: 17px; }
     td.hide-s, th.hide-s { display: none; }
+    input[type=text], input[type=password] { font-size: 16px; max-width: none; }
 }
 </style>
 </head>
@@ -201,7 +202,7 @@ input[type=text] { flex: 1; font-family: ui-monospace, SFMono-Regular, Menlo, Co
         <div class="actions">
             <button type="button" class="primary" id="btn-allow-me">Allow my IP</button>
             <button type="button" id="btn-cleanup">Run cleanup</button>
-            <input type="text" id="new-ip" placeholder="IP to allow" aria-label="IP to allow" style="max-width: 200px">
+            <input type="text" id="new-ip" placeholder="IP to allow" aria-label="IP to allow" style="max-width: 220px">
             <button type="button" id="btn-allow-ip">Add</button>
         </div>
     </div>
