@@ -6,7 +6,7 @@ import logger from "anyhow"
 import axios, {AxiosRequestConfig} from "axios"
 
 // IP items comments are prefixed with an AllowMe.
-const commentPrefix: string = "AllowMe: "
+export const commentPrefix: string = "AllowMe: "
 
 // Phase of the ruleset holding the zone's custom WAF rules.
 const firewallPhase: string = "http_request_firewall_custom"
@@ -275,8 +275,11 @@ export const ipBlock = async (ip: string, device: string): Promise<boolean> => {
  */
 export const cleanup = async (): Promise<void> => {
     try {
+        const maxAge = parseInt(settings.ip.maxAge)
+        if (!(maxAge > 0)) return
+
         const now = new Date().valueOf()
-        const age = parseInt(settings.ip.maxAge) * 1000 * 60
+        const age = maxAge * 1000 * 60
         const data = {items: []}
 
         // Fetch and process list of IPs.
@@ -311,6 +314,7 @@ export const cleanup = async (): Promise<void> => {
         }
     } catch (ex) {
         logger.error("Cloudflare.cleanup", ex)
+        throw ex
     }
 }
 

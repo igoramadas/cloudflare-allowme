@@ -1,6 +1,6 @@
 {
     "name": "cloudflare-allowme",
-    "version": "1.6.0",
+    "version": "1.7.0",
     "description": "Simplistic Cloudflare firewall manager to allow source IPs on a specific Cloudflare zone.",
     "keywords": [
         "access",
@@ -33,13 +33,13 @@
     },
     "dependencies": {
         "anyhow": "^4.0.0",
-        "axios": "^1.20.0",
+        "axios": "^1.21.1",
         "express": "^5.3.0",
         "ua-parser-js": "^2.0.10"
     },
     "devDependencies": {
         "@types/express": "^5.0.6",
-        "@types/bun": "^1.4.3",
+        "@types/bun": "^1.4.5",
         "@types/ua-parser-js": "^0.7.39",
         "typescript": "^7.0.2"
     },

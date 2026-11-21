@@ -4,5 +4,6 @@ declare namespace Cloudflare {
     interface Env {
         ALLOWME_CF_TOKEN: string
         ALLOWME_SERVER_SECRET: string
+        ALLOWME_ADMIN_PASSWORD: string
     }
 }

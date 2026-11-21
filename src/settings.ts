@@ -49,6 +49,12 @@ export class Settings {
         // How many times can a single IP fail to authenticate before getting blocked (defaults to 5).
         denyCount: process.env.ALLOWME_IP_DENYCOUNT || ""
     }
+    admin = {
+        // Enable the admin dashboard (disabled by default).
+        enabled: process.env.ALLOWME_ADMIN_ENABLED || "",
+        // Password required to use the admin dashboard API.
+        password: process.env.ALLOWME_ADMIN_PASSWORD || ""
+    }
     log = {
         // Logging level: none, error, info (defaults to info).
         level: process.env.ALLOWME_LOG_LEVEL || ""

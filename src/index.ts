@@ -1,5 +1,6 @@
 // Cloudflare AllowMe
 
+import {getBoolean} from "./utils"
 import settings from "./settings.js"
 import logger from "anyhow"
 
@@ -38,6 +39,10 @@ const run = async () => {
         if (settings.ip.maxAge == "") settings.ip.maxAge = "1440"
         if (settings.ip.blockInterval == "") settings.ip.blockInterval = "60"
         if (settings.ip.denyCount == "") settings.ip.denyCount = "5"
+
+        if (getBoolean(settings.admin.enabled) && !settings.admin.password) {
+            logger.warn("Index.run", "Admin dashboard requires a password ($ALLOWME_ADMIN_PASSWORD), it will stay disabled")
+        }
 
         // Get the account ID if none was set.
         if (!settings.cloudflare.accountId) {
