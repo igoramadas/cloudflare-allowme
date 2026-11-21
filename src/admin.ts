@@ -356,8 +356,12 @@ window.blockIp = function(ip) { act("/block", {ip: ip}, "Removed " + ip) }
 window.unbanIp = function(ip) { act("/unban", {ip: ip}, "Unbanned " + ip) }
 document.getElementById("btn-allow-me").onclick = function() { act("/allow", {device: "Admin dashboard"}, "Allowed " + clientIp) }
 document.getElementById("btn-allow-ip").onclick = function() {
-    var ip = document.getElementById("new-ip").value.trim()
-    if (ip) act("/allow", {ip: ip, device: "Admin dashboard"}, "Allowed " + ip)
+    var el = document.getElementById("new-ip")
+    var ip = el.value.trim()
+    if (ip) {
+        el.value = ""
+        act("/allow", {ip: ip, device: "Admin dashboard"}, "Allowed " + ip)
+    }
 }
 document.getElementById("btn-cleanup").onclick = function() { act("/cleanup", {}, "Cleanup done") }
 document.getElementById("btn-refresh").onclick = load
