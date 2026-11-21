@@ -49,11 +49,75 @@ export const isAllowedIP = async (ip: string): Promise<boolean> => {
         const clean = ip.startsWith("::ffff:") ? ip.substring(7) : ip
         const parsed = parseIP(clean) || clean
         const items = await getAllowedItems()
-        return items.some((i) => i.ip == clean || i.ip == parsed)
+        return items.some((i) => i.ip == parsed || matchIP(clean, i.ip))
     } catch (ex) {
         logger.error("Admin.isAllowedIP", ip, ex)
         return false
     }
+}
+
+/**
+ * Check if an IP matches a list entry, either exact or a CIDR range.
+ * @param ip Client IP.
+ * @param entry List entry, an IP or CIDR range.
+ */
+const matchIP = (ip: string, entry: string): boolean => {
+    if (!entry.includes("/")) {
+        return entry == ip
+    }
+
+    const [base, bitsStr] = entry.split("/")
+    const bits = parseInt(bitsStr)
+    if (isNaN(bits)) return false
+
+    // IPv4 CIDR.
+    if (!entry.includes(":") && !ip.includes(":")) {
+        if (bits < 0 || bits > 32) return false
+        const mask = bits == 0 ? 0 : (0xffffffff << (32 - bits)) >>> 0
+        const a = ipToLong(ip)
+        const b = ipToLong(base)
+        return a != null && b != null && (a & mask) == (b & mask)
+    }
+
+    // IPv6 CIDR.
+    if (entry.includes(":") && ip.includes(":")) {
+        if (bits < 0 || bits > 128) return false
+        const a = expandIPv6(ip)
+        const b = expandIPv6(base)
+        for (let i = 0; i < 8; i++) {
+            const rem = bits - i * 16
+            if (rem <= 0) break
+            const mask = rem >= 16 ? 0xffff : (0xffff << (16 - rem)) & 0xffff
+            if ((a[i] & mask) != (b[i] & mask)) return false
+        }
+        return true
+    }
+
+    return false
+}
+
+/**
+ * Convert a dotted IPv4 string to a number, null if invalid.
+ */
+const ipToLong = (ip: string): number => {
+    const parts = ip.split(".")
+    if (parts.length != 4) return null
+    return parts.reduce((a, o) => (a << 8) + (parseInt(o) || 0), 0) >>> 0
+}
+
+/**
+ * Expand an IPv6 string (including compressed forms) to its 8 groups.
+ */
+const expandIPv6 = (ip: string): number[] => {
+    const [head, tail] = ip.split("::")
+    const h = head ? head.split(":") : []
+    const t = tail === undefined ? [] : tail.split(":")
+    const mid = tail === undefined ? 8 - h.length : Math.max(8 - h.length - t.length, 0)
+    const groups = [...h, ...new Array(mid).fill("0"), ...t].slice(0, 8)
+
+    while (groups.length < 8) groups.push("0")
+
+    return groups.map((g) => parseInt(g || "0", 16) || 0)
 }
 
 // Self-contained admin dashboard page, served at /admin.
@@ -301,7 +365,7 @@ function render(d) {
         tbody.innerHTML = '<tr><td colspan="4" class="empty">No IPs on the list.</td></tr>'
     } else {
         tbody.innerHTML = d.allowed.map(function(i) {
-            return "<tr><td class=\\"ip\\">" + esc(i.ip) + "</td><td class=\\"muted\\">" + esc(i.device || "—") + '</td><td class=\\"muted hide-s\\">' + esc(fmtDate(i.added)) + '</td><td class=\\"row-actions\\"><button type=\\"button\\" class=\\"danger\\" onclick=\\"blockIp(&quot;' + esc(i.ip) + '&quot;)\\">Remove</button></td></tr>'
+            return "<tr><td class=\\"ip\\">" + esc(i.ip) + "</td><td class=\\"muted\\">" + esc(i.device || "—") + '</td><td class=\\"muted hide-s\\">' + esc(fmtDate(i.added)) + '</td><td class=\\"row-actions\\"><button type=\\"button\\" class=\\"danger\\" data-ip=\\"' + esc(i.ip) + '\\" onclick=\\"blockIp(this.dataset.ip)\\">Remove</button></td></tr>'
         }).join("")
     }
 
@@ -311,7 +375,7 @@ function render(d) {
         bl.innerHTML = '<div class="empty">No banned IPs.</div>'
     } else {
         bl.innerHTML = "<table><tbody>" + d.banned.map(function(i) {
-            return "<tr><td class=\\"ip\\">" + esc(i.ip) + '</td><td class=\\"muted\\">since ' + esc(fmtDate(i.since)) + '</td><td class=\\"row-actions\\"><button type=\\"button\\" onclick=\\"unbanIp(&quot;' + esc(i.ip) + '&quot;)\\">Unban</button></td></tr>'
+            return "<tr><td class=\\"ip\\">" + esc(i.ip) + '</td><td class=\\"muted\\">since ' + esc(fmtDate(i.since)) + '</td><td class=\\"row-actions\\"><button type=\\"button\\" data-ip=\\"' + esc(i.ip) + '\\" onclick=\\"unbanIp(this.dataset.ip)\\">Unban</button></td></tr>'
         }).join("") + "</tbody></table>"
     }
     if (d.failed && d.failed.length > 0) {
