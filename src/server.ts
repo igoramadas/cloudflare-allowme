@@ -193,8 +193,10 @@ export const prepare = (): void => {
             const b = Buffer.from(settings.admin.password)
             const valid = a.length == b.length && crypto.timingSafeEqual(a, b)
 
+            // Only count an actual wrong credential as a failure, so that
+            // unauthenticated probes (eg. dashboard page loads) don't ban IPs.
             if (!valid) {
-                authFailed(req)
+                if (candidate != "") authFailed(req)
                 res.status(401).send("Unauthorized")
                 return
             }
