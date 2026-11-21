@@ -2,14 +2,19 @@
 
 import {getBoolean, getDevice} from "./utils"
 import settings from "./settings.js"
+import * as admin from "./admin"
 import * as cloudflare from "./cloudflare"
 import logger from "anyhow"
+import crypto from "crypto"
 import express from "express"
 import http from "http"
 
 let app: express.Application
 let server: http.Server
 let timer: NodeJS.Timeout
+
+// Service start time, used by the admin dashboard.
+const startedAt = new Date()
 
 // List of failed and banned IPs due to failed authentication.
 // Please note that this is related to the AllowMe service
@@ -143,6 +148,162 @@ export const prepare = (): void => {
             res.status(500).send(`Failed to list banned IPs, from ${ip}`)
         }
     })
+
+    // Admin dashboard routes, only registered when enabled with a password.
+    if (admin.isEnabled()) {
+        // Check if the client IP is currently on the Cloudflare allowme list.
+        const adminIpCheck = async (req: express.Request, res: express.Response, next) => {
+            const ip = getClientIP(req)
+
+            if (!(await admin.isAllowedIP(ip))) {
+                logger.warn("Server.adminIpCheck", ip, "IP not on the allowed list")
+                res.status(403).send("Access denied")
+                return
+            }
+
+            next()
+        }
+
+        // IP check plus admin password validation (Bearer, Basic or ?password=).
+        const adminValidator = async (req: express.Request, res: express.Response, next) => {
+            const ip = getClientIP(req)
+
+            if (bannedIps[ip]) {
+                logger.error("Server.adminValidator", ip, `IP banned since ${bannedIps[ip].toLocaleString()}`)
+                res.status(401).send("Access denied")
+                return
+            }
+
+            if (!(await admin.isAllowedIP(ip))) {
+                logger.warn("Server.adminValidator", ip, "IP not on the allowed list")
+                res.status(403).send("Access denied")
+                return
+            }
+
+            const authHeader = req.headers.authorization || ""
+            let token = authHeader.includes(" ") ? authHeader.split(" ")[1] : ""
+
+            // Basic auth: decode and keep the password part only.
+            if (authHeader.startsWith("Basic") && token) {
+                token = Buffer.from(token, "base64").toString().split(":")[1] || ""
+            }
+
+            const candidate = token || (req.query.password as string) || ""
+            const a = Buffer.from(candidate)
+            const b = Buffer.from(settings.admin.password)
+            const valid = a.length == b.length && crypto.timingSafeEqual(a, b)
+
+            if (!valid) {
+                authFailed(req)
+                res.status(401).send("Unauthorized")
+                return
+            }
+
+            next()
+        }
+
+        // The dashboard page itself, reachable by allowed IPs.
+        app.get("/admin", adminIpCheck, (_req, res) => {
+            res.status(200).send(admin.page)
+        })
+
+        app.use("/admin/api", adminValidator, express.json())
+
+        // Service status: config, allowed IPs, banned and failed IPs.
+        app.get("/admin/api/status", async (req, res) => {
+            try {
+                const items = await admin.getAllowedItems()
+                const allowed = items.map((i) => {
+                    const hasPrefix = i.comment?.substring(0, cloudflare.commentPrefix.length) == cloudflare.commentPrefix
+                    return {ip: i.ip, device: hasPrefix ? i.comment.substring(cloudflare.commentPrefix.length).trim() : i.comment, added: i.created_on}
+                })
+
+                res.json({
+                    uptime: Math.round(process.uptime()),
+                    startedAt: startedAt,
+                    clientIp: getClientIP(req),
+                    cloudflare: {
+                        zone: settings.cloudflare.zone,
+                        zoneId: settings.cloudflare.zoneId,
+                        listId: settings.cloudflare.listId,
+                        listName: settings.cloudflare.listName
+                    },
+                    config: {
+                        port: settings.server.port,
+                        trustProxy: getBoolean(settings.server.trustProxy),
+                        maxAge: parseInt(settings.ip.maxAge),
+                        blockInterval: parseInt(settings.ip.blockInterval),
+                        denyCount: parseInt(settings.ip.denyCount)
+                    },
+                    allowed: allowed,
+                    banned: Object.entries(bannedIps).map(([ip, since]) => ({ip: ip, since: since})),
+                    failed: Object.entries(failedIps).map(([ip, count]) => ({ip: ip, count: count}))
+                })
+            } catch (ex) {
+                res.status(500).json({error: "Failed to fetch the status"})
+            }
+        })
+
+        // Allow an IP (defaults to the client IP).
+        app.post("/admin/api/allow", async (req, res) => {
+            const ip = req.body?.ip || getClientIP(req)
+            const device = req.body?.device || "Admin dashboard"
+
+            try {
+                const ok = await cloudflare.ipAllow(ip, device)
+                admin.clearItemsCache()
+                res.json({ok: ok, ip: ip})
+            } catch (ex) {
+                res.status(500).json({error: `Failed to add: ${ip}`})
+            }
+        })
+
+        // Remove an IP from the allowed list.
+        app.post("/admin/api/block", async (req, res) => {
+            const ip = req.body?.ip
+
+            if (!ip) {
+                res.status(400).json({error: "Missing ip"})
+                return
+            }
+
+            try {
+                const ok = await cloudflare.ipBlock(ip, "Admin dashboard")
+                admin.clearItemsCache()
+                res.json({ok: ok, ip: ip})
+            } catch (ex) {
+                res.status(500).json({error: `Failed to remove: ${ip}`})
+            }
+        })
+
+        // Remove an IP from the local auth-failure ban list.
+        app.post("/admin/api/unban", (req, res) => {
+            const ip = req.body?.ip
+
+            if (!ip) {
+                res.status(400).json({error: "Missing ip"})
+                return
+            }
+
+            delete bannedIps[ip]
+            delete failedIps[ip]
+            logger.info("Server.adminUnban", ip)
+            res.json({ok: true, ip: ip})
+        })
+
+        // Trigger the expired IP cleanup now.
+        app.post("/admin/api/cleanup", async (_req, res) => {
+            try {
+                await cloudflare.cleanup()
+                admin.clearItemsCache()
+                res.json({ok: true})
+            } catch (ex) {
+                res.status(500).json({error: "Cleanup failed"})
+            }
+        })
+
+        logger.info("Server.prepare", "Admin dashboard enabled at /admin")
+    }
 }
 
 /**

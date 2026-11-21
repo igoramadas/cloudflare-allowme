@@ -175,6 +175,9 @@ The service is fully configured via environment variables, either directly or vi
 | **ALLOWME_IP_BLOCKINTERVAL** | number | How long (in minutes) IPs should be blocked in case of repeated authentication failures. Defaults to 60 minutes (1 hour). Set to 0 to disable blocking. |
 | **ALLOWME_IP_DENYCOUNT** | number | How many times can an IP fail to authenticate before getting blocked. Defaults to 5. Setting to 0 will block IPs on their first failed auth. |
 | | | |
+| **ALLOWME_ADMIN_ENABLED** | boolean | Optional, enables the admin dashboard under the /admin path. Disabled by default. Requires `ALLOWME_ADMIN_PASSWORD` to be set. |
+| **ALLOWME_ADMIN_PASSWORD** | string | The password required to use the admin dashboard, asked on a sign-in form. |
+| | | |
 | **ALLOWME_LOG_LEVEL** | none, error, info | Console logging level. Set to "none" to fully disable logging, or "error" to only log errors and warnings. Defaults to "info", which logs everything. |
 
 #### Sample .env file
@@ -195,6 +198,13 @@ ALLOWME_SERVER_PROMPT=false
 | GET | **/allow** | Add the client IP to the allow list |
 | GET | **/block** | Remove the client IP from the allow list |
 | GET | **/banned** | Return list of IPs banner due to failed authentication |
+| GET | **/admin** | Admin dashboard, only when `$ALLOWME_ADMIN_ENABLED` is set |
+
+### Admin dashboard
+
+If `$ALLOWME_ADMIN_ENABLED` is enabled and `$ALLOWME_ADMIN_PASSWORD` is set, a simple admin dashboard is available on the /admin path. It shows the service status, the list of currently allowed and banned IPs, and lets you allow, remove and unban IPs or trigger a cleanup.
+
+The dashboard page is only accessible from IPs currently on the allow list, and its actions require the admin password. Failed password attempts count towards the same `$ALLOWME_IP_DENYCOUNT` / `$ALLOWME_IP_BLOCKINTERVAL` banning rules as the other endpoints.
 
 ### Authentication
 

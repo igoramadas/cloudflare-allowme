@@ -45,6 +45,7 @@
         "ALLOWME_IP_MAXAGE": "",
         "ALLOWME_IP_BLOCKINTERVAL": "",
         "ALLOWME_IP_DENYCOUNT": "",
+        "ALLOWME_ADMIN_ENABLED": "",
         "ALLOWME_LOG_LEVEL": ""
     },
     "upload_source_maps": true

@@ -6,7 +6,7 @@ import logger from "anyhow"
 import axios, {AxiosRequestConfig} from "axios"
 
 // IP items comments are prefixed with an AllowMe.
-const commentPrefix: string = "AllowMe: "
+export const commentPrefix: string = "AllowMe: "
 
 // Phase of the ruleset holding the zone's custom WAF rules.
 const firewallPhase: string = "http_request_firewall_custom"
