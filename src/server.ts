@@ -325,7 +325,7 @@ export const start = (): void => {
         server.listen(parseInt(settings.server.port), listenOk).on("error", listenError)
 
         if (parseInt(settings.ip.maxAge) > 0) {
-            timer = setInterval(cloudflare.cleanup, 1000 * 60 * 60)
+            timer = setInterval(() => cloudflare.cleanup().catch(() => {}), 1000 * 60 * 60)
             logConfig.push(`IP max age: ${settings.ip.maxAge}m`)
         } else {
             logConfig.push(`IP max age disabled`)
